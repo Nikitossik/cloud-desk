@@ -5,6 +5,7 @@ import psutil
 import pywinctl as pwc
 import pythoncom
 from functools import wraps
+import subprocess
 
 
 def run_in_com(func):
@@ -49,8 +50,21 @@ def get_running_applications():
                 "cmdline": " ".join(app_proc.cmdline()),
                 "name": app_proc.name(),
                 # "username": app_proc.username(), don't need it for now
-                # "windows": app_info["windows"], # for later
+                # "windows": app_info["windows"],  # for later
             }
         )
 
     return applications
+
+
+def is_application_running(app):
+    pass
+
+
+def run_applications(apps):
+    current_apps = get_running_applications()
+
+    for app in apps:
+        if app["exe"] in [a["exe"] for a in current_apps]:
+            continue
+        subprocess.call(app["cmdline"].split())

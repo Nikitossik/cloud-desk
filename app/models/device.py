@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .user import User
     from .application import Application
+    from .device_session import DeviceSession
 
 
 class Device(Base):
@@ -30,6 +31,9 @@ class Device(Base):
 
     # user = so.relationship("User", back_populates="devices")
     apps: so.Mapped[list["Application"]] = so.relationship(back_populates="device")
+    sessions: so.Mapped[list["DeviceSession"]] = so.relationship(
+        back_populates="device"
+    )
 
     def __repr__(self):
         return f"Device({self.mac_address})"
