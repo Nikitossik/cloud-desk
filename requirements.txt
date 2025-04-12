@@ -24,8 +24,12 @@ psutil==7.0.0
 pydantic==2.11.1
 pydantic_core==2.33.0
 Pygments==2.19.1
+PyMonCtl==0.92
 python-dotenv==1.1.0
 python-multipart==0.0.20
+pywin32==310
+PyWinBox==0.7
+PyWinCtl==0.4.1
 PyYAML==6.0.2
 rich==14.0.0
 rich-toolkit==0.14.1

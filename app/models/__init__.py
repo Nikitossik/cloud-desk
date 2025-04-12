@@ -8,4 +8,6 @@ class Base(DeclarativeBase):
 
 
 from .user import User
-from .session import Session
+from .device import Device
+from .user_session import UserSession
+from .application import Application

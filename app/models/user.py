@@ -1,13 +1,19 @@
+from typing import TYPE_CHECKING
 from . import Base
-from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import String
+import sqlalchemy as sa
+import sqlalchemy.orm as so
+
+if TYPE_CHECKING:
+    from .device import Device
 
 
 class User(Base):
     __tablename__ = "user"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(20))
-    surname: Mapped[str] = mapped_column(String(20))
-    email: Mapped[str] = mapped_column(String(100), unique=True)
-    password_hash: Mapped[str] = mapped_column(String(256))
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    name: so.Mapped[str] = so.mapped_column(sa.String(20))
+    surname: so.Mapped[str] = so.mapped_column(sa.String(20))
+    email: so.Mapped[str] = so.mapped_column(sa.String(100), unique=True)
+    password_hash: so.Mapped[str] = so.mapped_column(sa.String(256))
+
+    # devices = so.relationship("User", back_populates="user")

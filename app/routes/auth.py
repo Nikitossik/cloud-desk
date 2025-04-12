@@ -3,8 +3,8 @@ from fastapi.responses import RedirectResponse
 
 from ..database import get_db
 
-from ..schemas import UserIn, UserBase, UserCredentials, UserInDB
-from ..models import User, Session as UserSession
+from ..schemas import UserIn, UserCredentials, UserInDB
+from ..models import User, UserSession
 from ..hasher import Hasher
 
 from sqlalchemy.orm import Session
@@ -14,8 +14,12 @@ from ..dependencies import get_current_user
 auth_route = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@auth_route.post("/register", status_code=status.HTTP_201_CREATED)
-def register_user(*, db: Session = Depends(get_db), user: UserIn):
+# simple cookie-based auth
+# will be changed to token-based auth with best practices
+
+
+@auth_route.post("/sign-up", status_code=status.HTTP_201_CREATED)
+def signup_user(*, db: Session = Depends(get_db), user: UserIn):
     user_data = user.model_dump()
     found_user = db.query(User).filter(User.email == user_data["email"]).first()
 
@@ -35,13 +39,13 @@ def register_user(*, db: Session = Depends(get_db), user: UserIn):
     return {"message": "User registered successfully"}
 
 
-@auth_route.get("/login")
-def get_login_user():
-    return {"message": "Login page"}
+@auth_route.get("/sign-in")
+def get_signin_user():
+    return {"message": "You are on the login page mock"}
 
 
-@auth_route.post("/login")
-def login_user(
+@auth_route.post("/sign-in")
+def signin_user(
     *,
     db: Session = Depends(get_db),
     user_credentials: UserCredentials,
@@ -71,7 +75,7 @@ def login_user(
 @auth_route.get("/check")
 def check_user(*, current_user: UserInDB = Depends(get_current_user), request: Request):
     if not current_user:
-        redirect_url = request.url_for("login_user")
+        redirect_url = request.url_for("get_signin_user")
 
         return RedirectResponse(redirect_url)
 
