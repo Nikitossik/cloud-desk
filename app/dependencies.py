@@ -1,4 +1,4 @@
-from fastapi import Cookie, Depends
+from fastapi import Cookie, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from .database import get_db
 from .models import UserSession
@@ -32,3 +32,15 @@ def get_current_device(*, db: Session = Depends(get_db)):
         db.commit()
 
     return device
+
+
+def get_active_session(*, device: Device = Depends(get_current_device)):
+    active_session = device.get_active_session()
+
+    if not active_session:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="No active sessions at the moment",
+        )
+
+    return active_session

@@ -17,7 +17,7 @@ class DeviceSessionApps(Base):
         sa.Uuid(), primary_key=True, default=uuid.uuid4
     )
     device_session_id: so.Mapped[str] = so.mapped_column(
-        sa.ForeignKey("device_session.id", onupdate="CASCADE", ondelete="CASCADE")
+        sa.ForeignKey("device_session.id")
     )
     application_id: so.Mapped[str] = so.mapped_column(sa.ForeignKey("application.id"))
     device_session: so.Mapped["DeviceSession"] = so.relationship(

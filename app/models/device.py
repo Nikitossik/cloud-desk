@@ -3,14 +3,14 @@ import sqlalchemy.orm as so
 import sqlalchemy as sa
 import app.utils as u
 import uuid
+from ..database import get_db
 from datetime import datetime
 
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from .user import User
-    from .application import Application
-    from .device_session import DeviceSession
+from .user import User
+from .application import Application
+from .device_session import DeviceSession
 
 
 class Device(Base):
@@ -34,6 +34,37 @@ class Device(Base):
     sessions: so.Mapped[list["DeviceSession"]] = so.relationship(
         back_populates="device"
     )
+
+    def update_applications(self, applications_data, db):
+        for app in applications_data:
+            found_app = list(filter(lambda x: x.exe == app["exe"], self.apps))
+
+            if len(found_app) != 0:
+                continue
+
+            new_app = Application(**app)
+            self.apps.append(new_app)
+            db.commit()
+            db.refresh(new_app)
+
+    def deactivate_sessions(self, db):
+        for session in self.sessions:
+            session.is_active = False
+            db.commit()
+            db.refresh(session)
+
+    def activate_session(self, session_id: str, db):
+        for session in self.sessions:
+            session.is_active = session.id == session_id
+            db.commit()
+            db.refresh(session)
+
+    def get_active_session(self):
+        for session in self.sessions:
+            if session.is_active:
+                return session
+
+        return None
 
     def __repr__(self):
         return f"Device({self.mac_address})"

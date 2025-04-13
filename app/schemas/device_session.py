@@ -1,18 +1,34 @@
-from pydantic import BaseModel, Field, ConfigDict
-from uuid import UUID, uuid4
+from pydantic import BaseModel, ConfigDict, model_validator
 import datetime
+from typing_extensions import Self
+from coolname import generate_slug
+from slugify import slugify
 
 
 class DeviceSessionBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    name: str
-    description: str | None
+    name: str | None = None
+    description: str | None = None
+    slug_name: str | None = None
+    is_active: bool = False
 
 
 class DeviceSessionIn(DeviceSessionBase):
-    pass
+    @model_validator(mode="after")
+    def chec_session_name(self) -> Self:
+        if not self.name or len(self.name.strip()) == 0:
+            slugname = generate_slug(3)
+            self.name = slugname
+            self.slug_name = slugname
+
+        else:
+            self.slug_name = slugify(self.name, max_length=150, word_boundary=True)
+        return self
 
 
 class DeviceSessionOut(DeviceSessionBase):
     created_at: datetime.datetime
+    saved_at: datetime.datetime | None
+    restored_at: datetime.datetime | None
+    last_active_at: datetime.datetime | None
