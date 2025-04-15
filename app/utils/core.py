@@ -24,7 +24,7 @@ def get_mac_address():
     return ":".join(re.findall("..", "%012x" % uuid.getnode()))
 
 
-def get_device_info():
+def get_device_data():
     device_info = dict()
     device_info["mac-address"] = get_mac_address()
     device_info["os_name"] = platform.system()
@@ -55,10 +55,6 @@ def get_running_applications():
         )
 
     return applications
-
-
-def is_application_running(app):
-    pass
 
 
 def run_applications(apps):

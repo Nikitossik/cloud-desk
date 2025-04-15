@@ -1,10 +1,6 @@
-from typing import TYPE_CHECKING
-from . import Base
+from ..database import Base
 import sqlalchemy as sa
 import sqlalchemy.orm as so
-
-if TYPE_CHECKING:
-    from .device import Device
 
 
 class User(Base):

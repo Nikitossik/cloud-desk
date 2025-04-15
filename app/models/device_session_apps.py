@@ -1,4 +1,6 @@
-from . import Base
+from __future__ import annotations
+
+from ..database import Base
 import sqlalchemy as sa
 import sqlalchemy.orm as so
 import uuid
@@ -21,6 +23,6 @@ class DeviceSessionApps(Base):
     )
     application_id: so.Mapped[str] = so.mapped_column(sa.ForeignKey("application.id"))
     device_session: so.Mapped["DeviceSession"] = so.relationship(
-        back_populates="app_states"
+        "DeviceSession", back_populates="app_states"
     )
-    application: so.Mapped["Application"] = so.relationship("Application")
+    application: so.Mapped[Application] = so.relationship("Application")

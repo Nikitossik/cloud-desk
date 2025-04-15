@@ -10,8 +10,7 @@ class DeviceSessionBase(BaseModel):
 
     name: str | None = None
     description: str | None = None
-    slug_name: str | None = None
-    is_active: bool = False
+    slugname: str | None = None
 
 
 class DeviceSessionIn(DeviceSessionBase):
@@ -20,14 +19,15 @@ class DeviceSessionIn(DeviceSessionBase):
         if not self.name or len(self.name.strip()) == 0:
             slugname = generate_slug(3)
             self.name = slugname
-            self.slug_name = slugname
+            self.slugname = slugname
 
         else:
-            self.slug_name = slugify(self.name, max_length=150, word_boundary=True)
+            self.slugname = slugify(self.name, max_length=150, word_boundary=True)
         return self
 
 
 class DeviceSessionOut(DeviceSessionBase):
+    is_active: bool = False
     created_at: datetime.datetime
     saved_at: datetime.datetime | None
     restored_at: datetime.datetime | None

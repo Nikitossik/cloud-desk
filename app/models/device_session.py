@@ -1,10 +1,11 @@
-from . import Base
+from __future__ import annotations
+
+from ..database import Base
 import sqlalchemy as sa
 import sqlalchemy.orm as so
 import uuid
-from ..database import get_db
 
-from typing import TYPE_CHECKING
+from typing_extensions import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .device import Device
@@ -19,7 +20,7 @@ class DeviceSession(Base):
         sa.Uuid(), primary_key=True, default=uuid.uuid4
     )
     name: so.Mapped[str] = so.mapped_column(sa.String(100), unique=True)
-    slug_name: so.Mapped[str] = so.mapped_column(unique=True, index=True)
+    slugname: so.Mapped[str] = so.mapped_column(unique=True, index=True)
     description: so.Mapped[str | None]
     is_active: so.Mapped[bool] = so.mapped_column(sa.Boolean, default=True)
 
@@ -31,11 +32,13 @@ class DeviceSession(Base):
     # relations
 
     device_id: so.Mapped[str] = so.mapped_column(sa.ForeignKey("device.id"))
-    device: so.Mapped["Device"] = so.relationship(back_populates="sessions")
+    device: so.Mapped["Device"] = so.relationship("Device", back_populates="sessions")
     app_states: so.Mapped["DeviceSessionApps"] = so.relationship(
+        "DeviceSessionApps",
         back_populates="device_session",
     )
     apps: so.Mapped[list["Application"]] = so.relationship(
+        "Application",
         secondary="device_session_apps",
         # back_populates="sessions",
     )
