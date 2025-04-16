@@ -29,12 +29,11 @@ class Device(Base):
     architecture: so.Mapped[str]
     created_at = so.mapped_column(sa.DateTime(), server_default=sa.func.now())
 
-    # user = so.relationship("User", back_populates="devices")
     apps: so.Mapped[list["Application"]] = so.relationship(
-        "Application", back_populates="device"
+        "Application", back_populates="device", cascade="all, delete-orphan"
     )
     sessions: so.Mapped[list["DeviceSession"]] = so.relationship(
-        "DeviceSession", back_populates="device"
+        "DeviceSession", back_populates="device", cascade="all, delete-orphan"
     )
 
     def __repr__(self):

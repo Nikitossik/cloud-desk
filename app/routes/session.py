@@ -13,6 +13,30 @@ from ..services import DeviceService, DeviceSessionService
 session_route = APIRouter(prefix="/session", tags=["session"])
 
 
+@session_route.get("/", response_model=list[sch.DeviceSessionOut])
+def get_all_sessions(*, device: md.Device = Depends(get_current_device)):
+    return device.sessions
+
+
+@session_route.get("/active", response_model=sch.DeviceSessionOut)
+def get_active_session(
+    *,
+    db: so.Session = Depends(get_db),
+    device: md.Device = Depends(get_current_device),
+):
+    return DeviceService(db).get_active_session(device)
+
+
+@session_route.get("/{session_slug}", response_model=sch.DeviceSessionOut)
+def get_session_by_slug(
+    *,
+    db: so.Session = Depends(get_db),
+    device: md.Device = Depends(get_current_device),
+    session_slug: str,
+):
+    return DeviceSessionService(db).get_by_slug(session_slug, device)
+
+
 @session_route.post(
     "/",
     status_code=status.HTTP_201_CREATED,
@@ -28,19 +52,14 @@ def create_session(
     return DeviceSessionService(db).create(device_session, device)
 
 
-@session_route.get("/", response_model=list[sch.DeviceSessionOut])
-def get_all_sessions(*, device: md.Device = Depends(get_current_device)):
-    return device.sessions
-
-
-@session_route.get("/{session_slug}", response_model=sch.DeviceSessionOut)
-def get_session_by_slug(
+@session_route.delete("/{session_slug}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_session_by_slug(
     *,
     db: so.Session = Depends(get_db),
     device: md.Device = Depends(get_current_device),
     session_slug: str,
 ):
-    return DeviceSessionService(db).get_by_slug(session_slug, device)
+    DeviceSessionService(db).delete(session_slug, device)
 
 
 @session_route.post("/{session_slug}/activate")
@@ -66,6 +85,22 @@ def save_session(
 
     device_service.sync_applications(device)
     return device_session_service.save_state(device)
+
+
+@session_route.post(
+    "/active/restore",
+    status_code=status.HTTP_201_CREATED,
+    response_model=sch.DeviceSessionOut,
+)
+def restore_active_session(
+    *, db: so.Session = Depends(get_db), device: md.Device = Depends(get_current_device)
+):
+    device_service = DeviceService(db)
+    device_session_service = DeviceSessionService(db)
+
+    device_service.sync_applications(device)
+    active_session = device_service.get_active_session(device)
+    return device_session_service.restore_state(active_session.slugname, device)
 
 
 @session_route.post("/{session_slug}/restore")

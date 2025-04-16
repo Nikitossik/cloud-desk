@@ -1,6 +1,5 @@
 from ..utils.repositories import BaseRepository
 from ..models import Device, Application, DeviceSession
-from fastapi.encoders import jsonable_encoder
 from typing import Any
 
 
@@ -9,11 +8,14 @@ class DeviceRepository(BaseRepository):
         return self.db.query(Device).filter(Device.mac_address == mac_address).first()
 
     def create(self, device_data: dict) -> Device:
-        encoded_device_data = jsonable_encoder(device_data)
-        device = Device(**encoded_device_data)
+        device = Device(**device_data)
         self.db.add(device)
         self.db.commit()
         return device
+
+    def delete(self, device: Device):
+        self.db.delete(device)
+        self.db.commit()
 
     def activate_session(
         self, device_session: DeviceSession, device: Device

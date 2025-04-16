@@ -21,6 +21,10 @@ class DeviceSessionrepository(BaseRepository):
 
         return session
 
+    def delete(self, session):
+        self.db.delete(session)
+        self.db.commit()
+
     def clear_state(self, session: DeviceSession) -> DeviceSession:
         # deleting all states
         old_session_apps = (
@@ -31,7 +35,8 @@ class DeviceSessionrepository(BaseRepository):
 
         for app in old_session_apps:
             self.db.delete(app)
-            self.db.commit()
+
+        self.db.commit()
 
         return session
 
@@ -53,7 +58,7 @@ class DeviceSessionrepository(BaseRepository):
                     device_session_id=session.id, application_id=found_app.id
                 )
                 self.db.add(app_state)
-                self.db.commit()
-                self.db.refresh(app_state)
+
+        self.db.commit()
 
         return session

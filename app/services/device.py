@@ -38,3 +38,6 @@ class DeviceService:
         running_apps_data = uc.get_running_applications()
 
         return self.device_repo.update_applications(running_apps_data, device)
+
+    def delete(self, device: Device):
+        self.device_repo.delete(device)

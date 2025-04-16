@@ -31,6 +31,11 @@ class DeviceSessionService:
 
         return session
 
+    def delete(self, session_slug: str, device: Device):
+        session = self.get_by_slug(session_slug, device)
+
+        self.device_session_repo.delete(session)
+
     def activate_by_slug(self, session_slug: str, device: Device) -> DeviceSession:
         session = self.get_by_slug(session_slug, device)
         activated_session = self.device_repo.activate_session(session, device)

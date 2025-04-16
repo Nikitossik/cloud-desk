@@ -36,6 +36,7 @@ class DeviceSession(Base):
     app_states: so.Mapped["DeviceSessionApps"] = so.relationship(
         "DeviceSessionApps",
         back_populates="device_session",
+        cascade="all, delete-orphan",
     )
     apps: so.Mapped[list["Application"]] = so.relationship(
         "Application",
