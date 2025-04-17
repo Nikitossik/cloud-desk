@@ -19,7 +19,25 @@ class DeviceSessionService:
         session_data = device_session.model_dump()
         session_data["device_id"] = device.id
 
+        found_session = self.device_session_repo.get_by_slugname(
+            session_data["slugname"], device
+        )
+
+        if found_session:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Session with the given name already exists",
+            )
+
         return self.device_session_repo.create(session_data)
+
+    def clone_session_with_slugname(
+        self, session_slug: str, device_session: DeviceSessionIn, device: Device
+    ) -> DeviceSession:
+        original_session = self.get_session_by_slugname(session_slug, device)
+        session_clone = self.create_session(device_session, device)
+
+        return self.device_session_repo.clone_state(original_session, session_clone)
 
     def get_active_session(self, device: Device) -> DeviceSession:
         session = self.device_session_repo.get_active_session(device)
@@ -52,6 +70,10 @@ class DeviceSessionService:
         session = self.get_session_by_slugname(session_slug, device)
 
         self.device_session_repo.delete_instance(session)
+
+    def delete_all_sessions(self, device: Device):
+        for session in device.sessions:
+            self.device_session_repo.delete_instance(session)
 
     def activate_session_by_slug(
         self, session_slug: str, device: Device

@@ -6,7 +6,7 @@ from ..database import Base
 
 
 class BaseRepository:
-    model: Base | None
+    model: Base | None = None
 
     def __init__(self, db: Session):
         self._db: Session = db

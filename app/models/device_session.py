@@ -33,7 +33,7 @@ class DeviceSession(Base):
 
     device_id: so.Mapped[str] = so.mapped_column(sa.ForeignKey("device.id"))
     device: so.Mapped["Device"] = so.relationship("Device", back_populates="sessions")
-    app_states: so.Mapped["DeviceSessionApps"] = so.relationship(
+    app_states: so.Mapped[list["DeviceSessionApps"]] = so.relationship(
         "DeviceSessionApps",
         back_populates="device_session",
         cascade="all, delete-orphan",

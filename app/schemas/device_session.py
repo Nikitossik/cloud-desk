@@ -15,7 +15,7 @@ class DeviceSessionBase(BaseModel):
 
 class DeviceSessionIn(DeviceSessionBase):
     @model_validator(mode="after")
-    def chec_session_name(self) -> Self:
+    def check_session_name(self) -> Self:
         if not self.name or len(self.name.strip()) == 0:
             slugname = generate_slug(3)
             self.name = slugname

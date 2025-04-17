@@ -57,6 +57,24 @@ def create_session(
     return DeviceSessionService(db).create_session(device_session, device)
 
 
+@session_route.post(
+    "/{session_slug}/clone",
+    status_code=status.HTTP_201_CREATED,
+    response_model=sch.DeviceSessionOut,
+)
+def clone_session_with_slugname(
+    *,
+    db: so.Session = Depends(get_db),
+    device: md.Device = Depends(get_current_device),
+    slugname: str,
+    device_session: sch.DeviceSessionIn,
+):
+    DeviceSessionService(db).deactivate_all(device)
+    return DeviceSessionService(db).clone_session_with_slugname(
+        slugname, device_session, device
+    )
+
+
 @session_route.delete("/{session_slug}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_session_by_slug(
     *,
@@ -65,6 +83,13 @@ def delete_session_by_slug(
     session_slug: str,
 ):
     DeviceSessionService(db).delete_session(session_slug, device)
+
+
+@session_route.delete("/", status_code=status.HTTP_204_NO_CONTENT)
+def delete_all_sessions(
+    *, db: so.Session = Depends(get_db), device: md.Device = Depends(get_current_device)
+):
+    DeviceSessionService(db).delete_all_sessions(device)
 
 
 @session_route.post("/{session_slug}/activate")
