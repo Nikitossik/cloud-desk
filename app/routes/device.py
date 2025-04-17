@@ -19,7 +19,7 @@ def get_device(device=Depends(get_current_device)):
 def delete_current_device(
     db: so.Session = Depends(get_db), device=Depends(get_current_device)
 ):
-    DeviceService(db).delete(device)
+    DeviceService(db).delete_device(device)
 
 
 @device_route.get("/apps")

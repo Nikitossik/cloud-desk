@@ -20,24 +20,10 @@ class DeviceService:
 
         return device
 
-    def get_active_session(self, device: Device) -> DeviceSession:
-        session = self.device_repo.get_active_session(device)
-
-        if not session:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="No active sessions at the moment",
-            )
-
-        return session
-
-    def deactivate_sessions(self, device: Device):
-        return self.device_repo.deactivate_sessions(device)
-
     def sync_applications(self, device: Device):
         running_apps_data = uc.get_running_applications()
 
         return self.device_repo.update_applications(running_apps_data, device)
 
-    def delete(self, device: Device):
-        self.device_repo.delete(device)
+    def delete_device(self, device: Device):
+        self.device_repo.delete_instance(device)

@@ -1,28 +1,37 @@
 from ..utils.repositories import BaseRepository
-from ..models import DeviceSession, DeviceSessionApps, Application
+from ..models import Device, DeviceSession, DeviceSessionApps, Application
 from typing import Any
 
 
 class DeviceSessionrepository(BaseRepository):
-    def get_by_slugname(self, slugname: str) -> DeviceSession | None:
-        return (
-            self.db.query(DeviceSession)
-            .filter(DeviceSession.slugname == slugname)
-            .first()
-        )
+    model = DeviceSession
 
-    def get_all(self) -> list[DeviceSession]:
-        return self.db.query(DeviceSession).all()
+    def get_by_slugname(self, slugname: str, device: Device) -> DeviceSession | None:
+        for session in device.sessions:
+            if session.slugname == slugname:
+                return session
 
-    def create(self, session_data: dict[str, Any], device_id: str) -> DeviceSession:
-        session = DeviceSession(**session_data, device_id=device_id)
-        self.db.add(session)
+        return None
+
+    def activate(self, device_session: DeviceSession, device: Device) -> DeviceSession:
+        self.deactivate_all(device)
+        device_session.is_active = True
         self.db.commit()
+        self.db.refresh(device_session)
 
-        return session
+        return device_session
 
-    def delete(self, session):
-        self.db.delete(session)
+    def get_active_session(self, device: Device) -> DeviceSession | None:
+        for session in device.sessions:
+            if session.is_active:
+                return session
+
+        return None
+
+    def deactivate_all(self, device: Device):
+        for session in device.sessions:
+            session.is_active = False
+
         self.db.commit()
 
     def clear_state(self, session: DeviceSession) -> DeviceSession:

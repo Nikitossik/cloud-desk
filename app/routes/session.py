@@ -3,7 +3,7 @@ import sqlalchemy.orm as so
 import sqlalchemy as sa
 import app.schemas as sch
 import app.models as md
-import app.utils as u
+import app.utils.core as uc
 from ..dependencies.database import get_db
 from ..dependencies.device import get_current_device
 
@@ -11,6 +11,11 @@ from ..services import DeviceService, DeviceSessionService
 
 
 session_route = APIRouter(prefix="/session", tags=["session"])
+
+
+@session_route.get("/active-apps")
+def get_all_active_apps_data():
+    return uc.get_running_applications()
 
 
 @session_route.get("/", response_model=list[sch.DeviceSessionOut])
@@ -24,7 +29,7 @@ def get_active_session(
     db: so.Session = Depends(get_db),
     device: md.Device = Depends(get_current_device),
 ):
-    return DeviceService(db).get_active_session(device)
+    return DeviceSessionService(db).get_active_session(device)
 
 
 @session_route.get("/{session_slug}", response_model=sch.DeviceSessionOut)
@@ -34,7 +39,7 @@ def get_session_by_slug(
     device: md.Device = Depends(get_current_device),
     session_slug: str,
 ):
-    return DeviceSessionService(db).get_by_slug(session_slug, device)
+    return DeviceSessionService(db).get_session_by_slugname(session_slug, device)
 
 
 @session_route.post(
@@ -48,8 +53,8 @@ def create_session(
     device: md.Device = Depends(get_current_device),
     device_session: sch.DeviceSessionIn,
 ):
-    DeviceService(db).deactivate_sessions(device)
-    return DeviceSessionService(db).create(device_session, device)
+    DeviceSessionService(db).deactivate_all(device)
+    return DeviceSessionService(db).create_session(device_session, device)
 
 
 @session_route.delete("/{session_slug}", status_code=status.HTTP_204_NO_CONTENT)
@@ -59,7 +64,7 @@ def delete_session_by_slug(
     device: md.Device = Depends(get_current_device),
     session_slug: str,
 ):
-    DeviceSessionService(db).delete(session_slug, device)
+    DeviceSessionService(db).delete_session(session_slug, device)
 
 
 @session_route.post("/{session_slug}/activate")
@@ -69,7 +74,7 @@ def activate_sessin_by_slug(
     device: md.Device = Depends(get_current_device),
     db: so.Session = Depends(get_db),
 ):
-    return DeviceSessionService(db).activate_by_slug(session_slug, device)
+    return DeviceSessionService(db).activate_session_by_slug(session_slug, device)
 
 
 @session_route.post(
@@ -80,11 +85,8 @@ def activate_sessin_by_slug(
 def save_session(
     *, db: so.Session = Depends(get_db), device: md.Device = Depends(get_current_device)
 ):
-    device_service = DeviceService(db)
-    device_session_service = DeviceSessionService(db)
-
-    device_service.sync_applications(device)
-    return device_session_service.save_state(device)
+    DeviceService(db).sync_applications(device)
+    return DeviceSessionService(db).save_active_state(device)
 
 
 @session_route.post(
@@ -93,14 +95,15 @@ def save_session(
     response_model=sch.DeviceSessionOut,
 )
 def restore_active_session(
-    *, db: so.Session = Depends(get_db), device: md.Device = Depends(get_current_device)
+    *,
+    db: so.Session = Depends(get_db),
+    device: md.Device = Depends(get_current_device),
+    active_session: md.DeviceSession = Depends(get_active_session),
 ):
-    device_service = DeviceService(db)
-    device_session_service = DeviceSessionService(db)
-
-    device_service.sync_applications(device)
-    active_session = device_service.get_active_session(device)
-    return device_session_service.restore_state(active_session.slugname, device)
+    DeviceService(db).sync_applications(device)
+    return DeviceSessionService(db).restore_session_by_slug(
+        active_session.slugname, device
+    )
 
 
 @session_route.post("/{session_slug}/restore")
@@ -110,4 +113,4 @@ def restore_session(
     device: md.Device = Depends(get_current_device),
     session_slug: str,
 ):
-    return DeviceSessionService(db).restore_state(session_slug, device)
+    return DeviceSessionService(db).restore_session_by_slug(session_slug, device)
