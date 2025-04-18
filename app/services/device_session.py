@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from ..models import Device, DeviceSession
-from ..repositories import DeviceSessionrepository, DeviceRepository
+from ..repositories import DeviceSessionrepository
 from ..schemas import DeviceSessionIn, ApplicationBase
 import app.utils.core as uc
 from datetime import datetime, timezone
@@ -12,12 +12,11 @@ class DeviceSessionService:
         self.device_session_repo: DeviceSessionrepository = DeviceSessionrepository(db)
 
     def create_session(
-        self, device_session: DeviceSessionIn, device: Device
+        self, device_session: DeviceSessionIn, device: Device, activate: bool = True
     ) -> DeviceSession:
-        # session is active by default
-
         session_data = device_session.model_dump()
         session_data["device_id"] = device.id
+        session_data["is_active"] = activate
 
         found_session = self.device_session_repo.get_by_slugname(
             session_data["slugname"], device
@@ -29,13 +28,20 @@ class DeviceSessionService:
                 detail="Session with the given name already exists",
             )
 
+        if activate:
+            self.deactivate_all(device)
+
         return self.device_session_repo.create(session_data)
 
     def clone_session_with_slugname(
-        self, session_slug: str, device_session: DeviceSessionIn, device: Device
+        self,
+        session_slug: str,
+        device_session: DeviceSessionIn,
+        device: Device,
+        activate: bool = True,
     ) -> DeviceSession:
         original_session = self.get_session_by_slugname(session_slug, device)
-        session_clone = self.create_session(device_session, device)
+        session_clone = self.create_session(device_session, device, activate)
 
         return self.device_session_repo.clone_state(original_session, session_clone)
 

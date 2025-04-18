@@ -52,9 +52,9 @@ def create_session(
     db: so.Session = Depends(get_db),
     device: md.Device = Depends(get_current_device),
     device_session: sch.DeviceSessionIn,
+    activate: bool = True,
 ):
-    DeviceSessionService(db).deactivate_all(device)
-    return DeviceSessionService(db).create_session(device_session, device)
+    return DeviceSessionService(db).create_session(device_session, device, activate)
 
 
 @session_route.post(
@@ -68,10 +68,10 @@ def clone_session_with_slugname(
     device: md.Device = Depends(get_current_device),
     slugname: str,
     device_session: sch.DeviceSessionIn,
+    activate: bool = True,
 ):
-    DeviceSessionService(db).deactivate_all(device)
     return DeviceSessionService(db).clone_session_with_slugname(
-        slugname, device_session, device
+        slugname, device_session, device, activate
     )
 
 
