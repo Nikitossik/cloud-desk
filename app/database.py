@@ -1,11 +1,9 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import DeclarativeBase
+from .config import setting
 
-
-SQLALCHEMY_DATABASE_URL = "sqlite:///data.db"
-
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
+engine = create_engine(setting.SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 

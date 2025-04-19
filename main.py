@@ -3,13 +3,14 @@ import uvicorn
 from fastapi import FastAPI
 
 from app.database import engine, Base
-from app.models import Device, Application, DeviceSession, DeviceSessionApps
+from app.models import User, Device, Application, DeviceSession, DeviceSessionApps
 import app.routes as r
 
 app = FastAPI()
 
 
 Base.metadata.create_all(bind=engine)
+app.include_router(r.auth_route)
 app.include_router(r.device_route)
 app.include_router(r.session_route)
 
