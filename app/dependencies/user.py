@@ -4,9 +4,10 @@ from sqlalchemy.orm import Session
 from .database import get_db
 from typing import Annotated
 import jwt
-import app.utils.security as us
-from ..schemas import TokenData
-from ..services import UserService
+from ..schemas import TokenPayload
+from ..repositories import UserRepository
+from ..config import setting
+from pydantic import ValidationError
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
@@ -27,18 +28,17 @@ def get_current_user(
     *, db: Session = Depends(get_db), token: Annotated[str, Depends(oauth2_scheme)]
 ):
     try:
-        payload = us.decode_token(token)
-        user_id = payload.get("sub")
-        if user_id is None:
-            raise credentials_exception
-        token_data = TokenData(id=user_id)
+        payload = jwt.decode(
+            jwt=token, key=setting.ACCESS_SECRET_KEY, algorithms=[setting.ALGORITHM]
+        )
+        token_data = TokenPayload(**payload)
 
-    except jwt.exceptions.InvalidTokenError:
-        raise credentials_exception
     except jwt.exceptions.ExpiredSignatureError:
         raise expired_token_exception
+    except (jwt.exceptions.InvalidTokenError, ValidationError):
+        raise credentials_exception
 
-    user = UserService(db).get_user_by_id(token_data.id)
+    user = UserRepository(db).get(token_data.sub)
 
     if user is None:
         raise credentials_exception

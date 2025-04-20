@@ -1,4 +1,4 @@
 from .device import DeviceBase
 from .application import ApplicationBase, ApplicationInDB
 from .device_session import DeviceSessionBase, DeviceSessionIn, DeviceSessionOut
-from .user import UserBase, UserIn, Token, TokenData
+from .user import UserBase, UserIn, Token, TokenPayload

@@ -1,3 +1,3 @@
 from .device import DeviceService
 from .device_session import DeviceSessionService
-from .user import UserService
+from .auth import AuthService

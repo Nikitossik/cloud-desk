@@ -15,23 +15,30 @@ def get_password_hash(password):
 
 
 def create_access_token(
-    data: dict, expires_in: int = setting.ACCESS_TOKEN_EXPIRE_MINUTES
+    data: dict, expiry_minutes: int = int(setting.ACCESS_TOKEN_EXPIRE_MINUTES)
 ):
     data_to_encode = data.copy()
 
-    expire = datetime.now(timezone.utc) + timedelta(minutes=expires_in)
+    expiration_datetime = datetime.now(timezone.utc) + timedelta(minutes=expiry_minutes)
 
-    data_to_encode.update({"exp": expire})
+    data_to_encode.update({"exp": expiration_datetime})
     return jwt.encode(
-        payload=data_to_encode, key=setting.SECRET_KEY, algorithm=setting.ALGORITHM
+        payload=data_to_encode,
+        key=setting.ACCESS_SECRET_KEY,
+        algorithm=setting.ALGORITHM,
     )
 
 
-def decode_token(token: str):
-    try:
-        payload = jwt.decode(
-            jwt=token, key=setting.SECRET_KEY, algorithms=[setting.ALGORITHM]
-        )
-        return payload
-    except jwt.InvalidTokenError:
-        return False
+def create_refresh_token(
+    data: dict, expiry_minutes: int = int(setting.REFRESH_TOKEN_EXPIRE_MINUTES)
+):
+    data_to_encode = data.copy()
+
+    expiration_datetime = datetime.now(timezone.utc) + timedelta(minutes=expiry_minutes)
+
+    data_to_encode.update({"exp": expiration_datetime})
+    return jwt.encode(
+        payload=data_to_encode,
+        key=setting.REFRESH_SECRET_KEY,
+        algorithm=setting.ALGORITHM,
+    )
