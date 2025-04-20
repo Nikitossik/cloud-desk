@@ -6,8 +6,12 @@ from typing import Any
 class DeviceRepository(BaseRepository):
     model = Device
 
-    def get_by_mac_address(self, mac_address: str) -> Device | None:
-        return self.db.query(Device).filter(Device.mac_address == mac_address).first()
+    def get_by_user_and_mac(self, user_id: int, mac_address: str) -> Device | None:
+        return (
+            self.db.query(Device)
+            .filter(Device.user_id == user_id, Device.mac_address == mac_address)
+            .first()
+        )
 
     def delete_instance(self, device: Device):
         self.db.delete(device)

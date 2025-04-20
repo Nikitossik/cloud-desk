@@ -24,9 +24,5 @@ class Application(Base):
 
     device: so.Mapped["Device"] = so.relationship("Device", back_populates="apps")
 
-    # sessions: so.Mapped[list["DeviceSession"]] = so.relationship(
-    #     secondary="device_session_apps", back_populates="applications"
-    # )
-
     def __repr__(self):
         return f"Application({self.name})"

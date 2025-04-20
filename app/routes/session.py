@@ -13,9 +13,9 @@ from ..services import DeviceService, DeviceSessionService
 session_route = APIRouter(prefix="/session", tags=["session"])
 
 
-@session_route.get("/active-apps")
-def get_all_active_apps_data():
-    return uc.get_running_applications()
+# @session_route.get("/active-apps")
+# def get_all_active_apps_data():
+#     return uc.get_running_applications()
 
 
 @session_route.get("/", response_model=list[sch.DeviceSessionOut])

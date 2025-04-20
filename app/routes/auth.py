@@ -2,16 +2,15 @@ from fastapi import APIRouter, Depends, Header
 from fastapi.security import OAuth2PasswordRequestForm
 from typing import Annotated
 from ..models import User
-import app.utils.security as us
 from ..dependencies import get_db, get_current_user
 from sqlalchemy.orm import Session
-from ..schemas import Token, UserBase, UserIn
+from ..schemas import Token, UserIn, UserOut
 from ..services import AuthService
 
 auth_route = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@auth_route.post("/signup", response_model=UserBase)
+@auth_route.post("/signup", response_model=UserOut)
 def sign_up_user(*, db: Session = Depends(get_db), user_in: UserIn):
     return AuthService(db).signup_user(user_in)
 
@@ -34,7 +33,7 @@ def refresh_access_token(
     return AuthService(db).refresh_access_token(refresh_token)
 
 
-@auth_route.get("/me", response_model=UserBase)
+@auth_route.get("/me", response_model=UserOut)
 async def read_users_me(
     current_user: Annotated[User, Depends(get_current_user)],
 ):
