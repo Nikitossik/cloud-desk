@@ -12,6 +12,8 @@ class DeviceSessionBase(BaseModel):
     name: str | None = None
     description: str | None = None
     slugname: str | None = None
+    activate: bool = True
+    enable_tracking: bool = True
 
 
 class DeviceSessionIn(DeviceSessionBase):

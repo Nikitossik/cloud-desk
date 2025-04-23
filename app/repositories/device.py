@@ -18,9 +18,9 @@ class DeviceRepository(BaseRepository):
         self.db.commit()
 
     def update_applications(
-        self, apps: list[dict[str, Any]], device: Device
+        self, apps: dict[str, Any], device: Device
     ) -> list[Application]:
-        for app in apps:
+        for app in apps.values():
             found_app = (
                 self.db.query(Application)
                 .filter(

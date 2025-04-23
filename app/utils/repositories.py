@@ -52,7 +52,7 @@ class BaseRepository:
         self.db.commit()
         return obj
 
-    def delete_instance(self, instance):
+    def delete_instance(self, instance: Base):
         self.db.delete(instance)
         self.db.commit()
         return instance

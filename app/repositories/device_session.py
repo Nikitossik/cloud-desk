@@ -2,6 +2,8 @@ from ..utils.repositories import BaseRepository
 from ..models import Device, DeviceSession, DeviceSessionApps, Application
 from typing import Any
 
+from datetime import datetime
+
 
 class DeviceSessionrepository(BaseRepository):
     model = DeviceSession
@@ -13,26 +15,12 @@ class DeviceSessionrepository(BaseRepository):
 
         return None
 
-    def activate(self, device_session: DeviceSession, device: Device) -> DeviceSession:
-        self.deactivate_all(device)
-        device_session.is_active = True
-        self.db.commit()
-        self.db.refresh(device_session)
-
-        return device_session
-
     def get_active_session(self, device: Device) -> DeviceSession | None:
         for session in device.sessions:
             if session.is_active:
                 return session
 
         return None
-
-    def deactivate_all(self, device: Device):
-        for session in device.sessions:
-            session.is_active = False
-
-        self.db.commit()
 
     def clear_state(self, session: DeviceSession) -> DeviceSession:
         # deleting all states
@@ -66,7 +54,7 @@ class DeviceSessionrepository(BaseRepository):
     def update_state(
         self, session: DeviceSession, apps_data: dict[str, Any]
     ) -> DeviceSession:
-        for app in apps_data:
+        for app in apps_data.values():
             found_app = (
                 self.db.query(Application)
                 .filter(

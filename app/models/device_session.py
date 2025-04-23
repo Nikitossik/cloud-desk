@@ -23,6 +23,7 @@ class DeviceSession(Base):
     slugname: so.Mapped[str] = so.mapped_column(unique=True, index=True)
     description: so.Mapped[str | None]
     is_active: so.Mapped[bool] = so.mapped_column(sa.Boolean, default=True)
+    is_tracking: so.Mapped[bool] = so.mapped_column(sa.Boolean, default=True)
 
     created_at = so.mapped_column(sa.DateTime(), server_default=sa.func.now())
     saved_at = so.mapped_column(sa.DateTime(), nullable=True)
