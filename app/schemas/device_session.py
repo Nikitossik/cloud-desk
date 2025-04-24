@@ -12,11 +12,12 @@ class DeviceSessionBase(BaseModel):
     name: str | None = None
     description: str | None = None
     slugname: str | None = None
-    activate: bool = True
-    enable_tracking: bool = True
 
 
 class DeviceSessionIn(DeviceSessionBase):
+    activate: bool = True
+    enable_tracking: bool = True
+
     @model_validator(mode="after")
     def check_session_name(self) -> Self:
         if not self.name or len(self.name.strip()) == 0:
@@ -29,7 +30,8 @@ class DeviceSessionIn(DeviceSessionBase):
 
 
 class DeviceSessionOut(DeviceSessionBase):
-    is_active: bool = False
+    is_active: bool = True
+    is_tracking: bool = True
     created_at: datetime.datetime
     saved_at: datetime.datetime | None
     restored_at: datetime.datetime | None

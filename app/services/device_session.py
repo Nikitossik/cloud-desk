@@ -22,6 +22,9 @@ class DeviceSessionService:
         session_data["is_active"] = session_data["activate"]
         session_data["is_tracking"] = session_data["enable_tracking"]
 
+        if session_data["is_active"]:
+            self.deactivate_last_active_session(device)
+
         found_session = self.device_session_repo.get_by_slugname(
             session_data["slugname"], device
         )
@@ -34,25 +37,28 @@ class DeviceSessionService:
 
         new_session = self.device_session_repo.create(session_data)
 
-        if new_session.is_active:
-            self.deactivate_last_active_session(device)
-
         if new_session.is_tracking:
             self.start_session_tracking(new_session)
 
-        return self.device_session_repo.create(session_data)
-
-    def deactivate_last_active_session(self, device: Device):
-        last_active_session = self.get_active_session(device)
-
-        if last_active_session:
-            self.deactivate_session(last_active_session)
+        return new_session
 
     def start_session_tracking(self, session: DeviceSession):
         # running tracker
 
         SessionAppUsageTracker.set(session.id)
         SessionAppUsageTracker.start(session.id)
+
+    def enable_session_tracking(self, session: DeviceSession) -> DeviceSession:
+        if session.is_tracking:
+            return session
+
+        tracked_session = self.device_session_repo.update(
+            session, {"is_tracking": True}
+        )
+
+        self.start_session_tracking(tracked_session)
+
+        return tracked_session
 
     def stop_session_tracking(self, session: DeviceSession):
         usage_data = SessionAppUsageTracker.stop(session.id)
@@ -67,34 +73,57 @@ class DeviceSessionService:
                     )
                 print("\n")
 
+    def disable_session_tracking(
+        self, session: DeviceSession, save_usage: bool = True
+    ) -> DeviceSession:
+        untracked_session = self.device_session_repo.update(
+            session, {"is_tracking": False}
+        )
+
+        self.start_session_tracking(untracked_session)
+
+        return untracked_session
+
     def delete_session(self, session: DeviceSession):
+        SessionAppUsageTracker.unset(session.id)
         self.device_session_repo.delete_instance(session)
 
     def activate_session(self, session: DeviceSession, device: Device) -> DeviceSession:
+        if session.is_active:
+            return session
+
         self.deactivate_last_active_session(device)
 
         activated_session = self.device_session_repo.update(
             session, {"is_active": True}
         )
 
-        if session.is_tracking:
+        if activated_session.is_tracking:
             self.start_session_tracking(activated_session)
 
         return activated_session
 
-    def deactivate_session(self, session: DeviceSession) -> DeviceSession:
-        self.stop_session_tracking(session)
+    def deactivate_last_active_session(self, device: Device):
+        last_active_session = self.device_session_repo.get_active_session(device)
 
-        saved_session = self.save_session(session)
+        if last_active_session:
+            self.deactivate_session(last_active_session)
 
-        self.device_session_repo.update(
+    def deactivate_session(
+        self, session: DeviceSession, save_usage: bool = True
+    ) -> DeviceSession:
+        saved_session = self.save_session_state(session)
+
+        saved_session = self.device_session_repo.update(
             saved_session,
             {"is_active": False, "last_active_at": datetime.now()},
         )
 
+        self.stop_session_tracking(saved_session)
+
         return saved_session
 
-    def save_session(self, session: DeviceSession) -> DeviceSession:
+    def save_session_state(self, session: DeviceSession) -> DeviceSession:
         running_apps_data = uc.get_running_applications()
 
         # datetime of saving
@@ -107,11 +136,16 @@ class DeviceSessionService:
             cleared_session, running_apps_data
         )
 
-        if updated_session.is_tracking:
-            self.stop_session_tracking(updated_session)
-            self.start_session_tracking(updated_session)
-
         return updated_session
+
+    def save_session(self, session: DeviceSession) -> DeviceSession:
+        saved_session = self.save_session_state(session)
+
+        if saved_session.is_tracking:
+            self.stop_session_tracking(saved_session)
+            self.start_session_tracking(saved_session)
+
+        return saved_session
 
     def restore_session(self, session: DeviceSession, device: Device) -> DeviceSession:
         self.deactivate_last_active_session(device)
