@@ -104,11 +104,6 @@ def disable_active_session_tracking(
 
 
 @active_session_route.post(
-    "/restore",
-    status_code=status.HTTP_201_CREATED,
-    response_model=sch.DeviceSessionOut,
-)
-@active_session_route.post(
     "/deactivate",
     status_code=status.HTTP_201_CREATED,
     response_model=sch.DeviceSessionOut,
@@ -124,6 +119,11 @@ def deactivate_active_session(
     return DeviceSessionService(db).deactivate_session(active_session, save_usage)
 
 
+@active_session_route.post(
+    "/restore",
+    status_code=status.HTTP_201_CREATED,
+    response_model=sch.DeviceSessionOut,
+)
 def restore_active_session(
     *,
     db: so.Session = Depends(d.get_db),

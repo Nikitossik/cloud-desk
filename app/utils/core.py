@@ -50,13 +50,12 @@ def track_apps_usage(stop_event: threading.Event, usage_data: dict[str, Any]):
         time.sleep(2)
 
 
-def update_apps_usage(usage_data: dict[str, Any]) -> dict[str, Any]:
+def end_apps_usage(usage_data: dict[str, Any]) -> dict[str, Any]:
     for _, app_data in usage_data.items():
         now = datetime.now()
         for track in app_data["tracking"]:
             if "end" not in track.keys():
                 track["end"] = now
-                app_data["was_running_before_track_stop"] = True
 
     return usage_data
 
@@ -89,7 +88,6 @@ def get_running_applications():
 
             if key not in apps_data_dict:
                 apps_data_dict[key] = {
-                    "pid": pid,
                     "exe": exe_path,
                     "name": proc.name(),
                     "cmdline": " ".join(proc.cmdline()),
@@ -109,11 +107,9 @@ def get_running_applications():
 
     apps_data_dict = {
         key.split("_")[0]: {
-            "pid": app["pid"],
             "exe": app["exe"],
             "name": app["name"],
             "cmdline": app["cmdline"],
-            "was_running_before_track_stop": False,
             "tracking": [],
         }
         for key, app in apps_data_dict.items()

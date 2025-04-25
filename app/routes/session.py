@@ -11,11 +11,6 @@ from ..services import DeviceService, DeviceSessionService
 session_route = APIRouter(prefix="/session", tags=["session"])
 
 
-@session_route.get("/active-apps", response_model=list[sch.ApplicationBase])
-def get_all_active_apps_data(current_user: md.User = Depends(d.get_current_user)):
-    return [app for app in uc.get_running_applications().values()]
-
-
 @session_route.get("/", response_model=list[sch.DeviceSessionOut])
 def get_all_sessions(*, device: md.Device = Depends(d.get_current_device)):
     return device.sessions

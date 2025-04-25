@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from ..tracking.app_usage import SessionAppUsageTracker
 from ..models import Device, DeviceSession
-from ..repositories import DeviceSessionrepository
+from ..repositories import DeviceSessionrepository, AppsUsageRepository
 from ..schemas import DeviceSessionIn, ApplicationBase
 import app.utils.core as uc
 from datetime import datetime, timezone
@@ -12,6 +12,7 @@ from typing import Any
 class DeviceSessionService:
     def __init__(self, db: Session):
         self.device_session_repo: DeviceSessionrepository = DeviceSessionrepository(db)
+        self.apps_usage_repo: AppsUsageRepository = AppsUsageRepository(db)
 
     def create_session(
         self, device_session: DeviceSessionIn, device: Device
@@ -61,26 +62,19 @@ class DeviceSessionService:
         return tracked_session
 
     def stop_session_tracking(self, session: DeviceSession):
-        usage_data = SessionAppUsageTracker.stop(session.id)
-
-        if usage_data:
-            for _, app_data in usage_data.items():
-                print(app_data["name"])
-
-                for track in app_data["tracking"]:
-                    print(
-                        f"{datetime.strftime(track['start'], '%d/%m/%y %H:%M:%S')} - {datetime.strftime(track['end'], '%d/%m/%y %H:%M:%S')}"
-                    )
-                print("\n")
+        return SessionAppUsageTracker.stop(session.id)
 
     def disable_session_tracking(
         self, session: DeviceSession, save_usage: bool = True
     ) -> DeviceSession:
+        usage_data = self.stop_session_tracking(session)
+
+        if save_usage and usage_data:
+            self.save_session_app_usage(usage_data)
+
         untracked_session = self.device_session_repo.update(
             session, {"is_tracking": False}
         )
-
-        self.start_session_tracking(untracked_session)
 
         return untracked_session
 
@@ -119,7 +113,10 @@ class DeviceSessionService:
             {"is_active": False, "last_active_at": datetime.now()},
         )
 
-        self.stop_session_tracking(saved_session)
+        usage_data = self.stop_session_tracking(saved_session)
+
+        if save_usage:
+            self.save_session_app_usage(usage_data)
 
         return saved_session
 
@@ -137,11 +134,15 @@ class DeviceSessionService:
 
         return saved_session
 
+    def save_session_app_usage(self, usage_data: dict[str, Any]):
+        self.apps_usage_repo.save_apps_usage(usage_data)
+
     def save_session(self, session: DeviceSession) -> DeviceSession:
         saved_session = self.save_session_state(session)
 
         if saved_session.is_tracking:
-            self.stop_session_tracking(saved_session)
+            usage_data = self.stop_session_tracking(saved_session)
+            self.save_session_app_usage(usage_data)
             self.start_session_tracking(saved_session)
 
         return saved_session

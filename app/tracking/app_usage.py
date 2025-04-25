@@ -43,7 +43,7 @@ class SessionAppUsageTracker:
         print(f"\nTracker started for session with id {session_id}")
 
     @staticmethod
-    def stop(session_id: str, unset: bool = True) -> dict[str, Any] | None:
+    def stop(session_id: str) -> dict[str, Any] | None:
         tracker = SessionAppUsageTracker.get(session_id)
 
         if not tracker:
@@ -52,10 +52,9 @@ class SessionAppUsageTracker:
 
         tracker["stop_event"].set()
         tracker["thread"].join()
-        usage_data = core.update_apps_usage(tracker["data"])
+        usage_data = core.end_apps_usage(tracker["data"])
 
-        if unset:
-            SessionAppUsageTracker.unset(session_id)
+        SessionAppUsageTracker.unset(session_id)
 
         return usage_data
 

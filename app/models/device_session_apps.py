@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .device_session import DeviceSession
     from .application import Application
+    from .app_usage_periods import AppUsagePeriods
 
 
 class DeviceSessionApps(Base):
@@ -26,4 +27,9 @@ class DeviceSessionApps(Base):
     device_session: so.Mapped["DeviceSession"] = so.relationship(
         "DeviceSession", back_populates="app_states"
     )
-    application: so.Mapped[Application] = so.relationship("Application")
+    application: so.Mapped["Application"] = so.relationship("Application")
+    usage_periods: so.Mapped[list["AppUsagePeriods"]] = so.relationship(
+        "AppUsagePeriods",
+        back_populates="session_app",
+        cascade="all, delete-orphan",
+    )

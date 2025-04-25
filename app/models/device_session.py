@@ -42,5 +42,4 @@ class DeviceSession(Base):
     apps: so.Mapped[list["Application"]] = so.relationship(
         "Application",
         secondary="device_session_apps",
-        # back_populates="sessions",
     )
