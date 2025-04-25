@@ -20,6 +20,17 @@ def get_active_session(
     return DeviceSessionService(db).get_active_session(device)
 
 
+@active_session_route.get("/apps", response_model=list[sch.ApplicationOutWithState])
+def get_active_session_apps(
+    *,
+    active_session: md.DeviceSession = Depends(d.get_active_session),
+):
+    return [
+        sch.ApplicationOutWithState.from_state(app_state)
+        for app_state in active_session.app_states
+    ]
+
+
 @active_session_route.delete("/", status_code=status.HTTP_204_NO_CONTENT)
 def delete_active_session(
     *,

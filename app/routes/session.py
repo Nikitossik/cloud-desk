@@ -54,6 +54,22 @@ def get_session_by_slug(
     return DeviceSessionService(db).get_session_by_slugname(session_slug, device)
 
 
+@session_route.get(
+    "/{session_slug}/apps", response_model=list[sch.ApplicationOutWithState]
+)
+def get_session_apps(
+    *,
+    db: so.Session = Depends(d.get_db),
+    device: md.Device = Depends(d.get_current_device),
+    session_slug: str,
+):
+    session = DeviceSessionService(db).get_session_by_slugname(session_slug, device)
+    return [
+        sch.ApplicationOutWithState.from_state(app_state)
+        for app_state in session.app_states
+    ]
+
+
 @session_route.post(
     "/{session_slug}/clone",
     status_code=status.HTTP_201_CREATED,

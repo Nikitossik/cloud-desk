@@ -127,16 +127,15 @@ class DeviceSessionService:
         running_apps_data = uc.get_running_applications()
 
         # datetime of saving
-        self.device_session_repo.update(
+        saved_session = self.device_session_repo.update(
             session, {"saved_at": datetime.now(tz=timezone.utc)}
         )
 
-        cleared_session = self.device_session_repo.clear_state(session)
-        updated_session = self.device_session_repo.update_state(
-            cleared_session, running_apps_data
+        saved_session = self.device_session_repo.update_apps_state(
+            saved_session, running_apps_data
         )
 
-        return updated_session
+        return saved_session
 
     def save_session(self, session: DeviceSession) -> DeviceSession:
         saved_session = self.save_session_state(session)

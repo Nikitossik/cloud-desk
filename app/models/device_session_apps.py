@@ -22,6 +22,7 @@ class DeviceSessionApps(Base):
         sa.ForeignKey("device_session.id")
     )
     application_id: so.Mapped[str] = so.mapped_column(sa.ForeignKey("application.id"))
+    is_active: so.Mapped[bool] = so.mapped_column(sa.Boolean, default=True)
     device_session: so.Mapped["DeviceSession"] = so.relationship(
         "DeviceSession", back_populates="app_states"
     )

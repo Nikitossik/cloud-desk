@@ -22,21 +22,6 @@ class DeviceSessionrepository(BaseRepository):
 
         return None
 
-    def clear_state(self, session: DeviceSession) -> DeviceSession:
-        # deleting all states
-        old_session_apps = (
-            self.db.query(DeviceSessionApps)
-            .filter(DeviceSessionApps.device_session_id == session.id)
-            .all()
-        )
-
-        for app in old_session_apps:
-            self.db.delete(app)
-
-        self.db.commit()
-
-        return session
-
     def clone_state(
         self, original_session: DeviceSession, clone_session: DeviceSession
     ) -> DeviceSession:
@@ -51,9 +36,14 @@ class DeviceSessionrepository(BaseRepository):
         self.db.refresh(clone_session)
         return clone_session
 
-    def update_state(
+    def update_apps_state(
         self, session: DeviceSession, apps_data: dict[str, Any]
     ) -> DeviceSession:
+        for app_state in session.app_states:
+            app_state.is_active = False
+
+        self.db.commit()
+
         for app in apps_data.values():
             found_app = (
                 self.db.query(Application)
@@ -64,7 +54,16 @@ class DeviceSessionrepository(BaseRepository):
                 .first()
             )
 
-            if found_app:
+            app_states = [
+                app_state
+                for app_state in session.app_states
+                if app_state.application_id == found_app.id
+            ]
+
+            if len(app_states):
+                app_state = app_states[0]
+                app_state.is_active = True
+            else:
                 app_state = DeviceSessionApps(
                     device_session_id=session.id, application_id=found_app.id
                 )

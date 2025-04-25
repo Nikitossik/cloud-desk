@@ -36,5 +36,3 @@ class DeviceSessionOut(DeviceSessionBase):
     saved_at: datetime.datetime | None
     restored_at: datetime.datetime | None
     last_active_at: datetime.datetime | None
-
-    apps: list[ApplicationBase]

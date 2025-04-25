@@ -1,13 +1,13 @@
-from ..repositories.device import DeviceRepository
+from ..repositories import DeviceRepository, Applicationrepository
 from sqlalchemy.orm import Session
 import app.utils.core as uc
-from ..models import Device, DeviceSession
-from fastapi import HTTPException, status
+from ..models import Device
 
 
 class DeviceService:
     def __init__(self, db: Session):
         self.device_repo: DeviceRepository = DeviceRepository(db)
+        self.application_repo: Applicationrepository = Applicationrepository(db)
 
     def create_or_get_device(self, user_id: int) -> Device:
         mac_address = uc.get_mac_address()
@@ -22,9 +22,17 @@ class DeviceService:
         return device
 
     def sync_applications(self, device: Device):
-        running_apps_data = uc.get_running_applications()
+        apps = uc.get_running_applications()
 
-        return self.device_repo.update_applications(running_apps_data, device)
+        for app in apps.values():
+            found_app = self.application_repo.get_by_device_and_exe(
+                app["exe"], device.id
+            )
+
+            if not found_app:
+                self.application_repo.create({**app, "device_id": device.id})
+
+        return device.apps
 
     def delete_device(self, device: Device):
         self.device_repo.delete_instance(device)
