@@ -8,7 +8,7 @@ import app.dependencies as d
 from ..services import DeviceService, DeviceSessionService
 from typing import Annotated
 
-active_session_route = APIRouter(prefix="/session/active", tags=["active session"])
+active_session_route = APIRouter(prefix="/active-session", tags=["active session"])
 
 
 @active_session_route.get("/", response_model=sch.DeviceSessionOut)

@@ -50,16 +50,15 @@ class DeviceSessionService:
         SessionAppUsageTracker.start(session.id)
 
     def enable_session_tracking(self, session: DeviceSession) -> DeviceSession:
-        if session.is_tracking:
+        if SessionAppUsageTracker.get(session.id):
             return session
 
-        tracked_session = self.device_session_repo.update(
-            session, {"is_tracking": True}
-        )
+        if not session.is_tracking:
+            session = self.device_session_repo.update(session, {"is_tracking": True})
 
-        self.start_session_tracking(tracked_session)
+        self.start_session_tracking(session)
 
-        return tracked_session
+        return session
 
     def stop_session_tracking(self, session: DeviceSession):
         return SessionAppUsageTracker.stop(session.id)

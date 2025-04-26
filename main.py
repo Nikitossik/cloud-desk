@@ -3,7 +3,14 @@ import uvicorn
 from fastapi import FastAPI
 
 from app.database import engine, Base
-from app.models import User, Device, Application, DeviceSession, DeviceSessionApps
+from app.models import (
+    User,
+    Device,
+    Application,
+    DeviceSession,
+    DeviceSessionApps,
+    AppUsagePeriods,
+)
 import app.routes as r
 
 app = FastAPI()

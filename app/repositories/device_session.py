@@ -54,6 +54,9 @@ class DeviceSessionrepository(BaseRepository):
                 .first()
             )
 
+            if not found_app:
+                continue
+
             app_states = [
                 app_state
                 for app_state in session.app_states
