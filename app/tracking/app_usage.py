@@ -24,10 +24,8 @@ class SessionAppUsageTracker:
                 "data": usage_data,
             }
 
-        print(f"\nTracker set for session with id {session_id}")
-
     @staticmethod
-    def get(session_id: str) -> dict[str, Any]:
+    def get(session_id: str) -> dict[str, Any] | None:
         return SESSION_TRACKERS.get(session_id, None)
 
     @staticmethod
@@ -35,19 +33,15 @@ class SessionAppUsageTracker:
         tracker = SessionAppUsageTracker.get(session_id)
 
         if not tracker:
-            print(f"\nNo tracker for session {session_id}")
             return
 
         tracker["thread"].start()
-
-        print(f"\nTracker started for session with id {session_id}")
 
     @staticmethod
     def stop(session_id: str) -> dict[str, Any] | None:
         tracker = SessionAppUsageTracker.get(session_id)
 
         if not tracker:
-            print(f"\nNo tracker for session {session_id}")
             return None
 
         tracker["stop_event"].set()
@@ -64,6 +58,3 @@ class SessionAppUsageTracker:
 
         if tracker:
             SESSION_TRACKERS.pop(session_id)
-            print(f"\nTracker unset for session {session_id}")
-
-        print(f"\nNo tracker for session {session_id}")

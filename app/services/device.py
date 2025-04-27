@@ -1,7 +1,7 @@
 from ..repositories import DeviceRepository, Applicationrepository
 from sqlalchemy.orm import Session
 import app.utils.core as uc
-from ..models import Device
+from ..models import Device, Application
 
 
 class DeviceService:
@@ -21,7 +21,7 @@ class DeviceService:
 
         return device
 
-    def sync_applications(self, device: Device):
+    def sync_applications(self, device: Device) -> list[Application]:
         apps = uc.get_running_applications()
 
         for app in apps.values():

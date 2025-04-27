@@ -10,9 +10,10 @@ import time
 from typing import Any
 from datetime import datetime
 import threading
+from typing import Callable
 
 
-def run_in_com(func):
+def run_in_com(func: Callable) -> Callable:
     @wraps(func)
     def wrapper(*args, **kwargs):
         pythoncom.CoInitialize()
@@ -60,11 +61,11 @@ def end_apps_usage(usage_data: dict[str, Any]) -> dict[str, Any]:
     return usage_data
 
 
-def get_mac_address():
+def get_mac_address() -> str:
     return ":".join(re.findall("..", "%012x" % uuid.getnode()))
 
 
-def get_device_data():
+def get_device_data() -> dict[str, Any]:
     device_info = dict()
     device_info["mac-address"] = get_mac_address()
     device_info["os_name"] = platform.system()
@@ -75,7 +76,7 @@ def get_device_data():
 
 
 @run_in_com
-def get_running_applications():
+def get_running_applications() -> dict[str, Any]:
     apps_data_dict = dict()
 
     for window in pwc.getAllWindows():
@@ -119,7 +120,7 @@ def get_running_applications():
     return apps_data_dict
 
 
-def run_applications(apps):
+def run_applications(apps: list[dict[str, Any]]):
     current_apps = get_running_applications()
 
     for app in apps:

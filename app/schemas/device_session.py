@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, model_validator
+from pydantic import BaseModel, ConfigDict, model_validator, Field
 import datetime
 from typing_extensions import Self
 from coolname import generate_slug
@@ -9,14 +9,41 @@ from .application import ApplicationBase
 class DeviceSessionBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    name: str | None = None
-    description: str | None = None
-    slugname: str | None = None
+    name: str | None = Field(
+        default=None,
+        description="Name of the session. If not provided - backend generates an automatic slugified name",
+    )
+    description: str | None = Field(
+        default=None, description="Description of the session. Can be null."
+    )
+    slugname: str | None = Field(
+        default=None,
+        description="Slugified version of the session name used for URLs and identifiers.",
+    )
 
 
 class DeviceSessionIn(DeviceSessionBase):
-    activate: bool = True
-    enable_tracking: bool = True
+    activate: bool = Field(
+        default=True,
+        description="Flag indicating if the session should be activated upon creation.",
+    )
+    enable_tracking: bool = Field(
+        default=True,
+        description="Flag indicating if application tracking should be enabled for the session.",
+    )
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "name": "Work Session",
+                    "description": "Session for development and meetings",
+                    "activate": True,
+                    "enable_tracking": True,
+                }
+            ]
+        }
+    }
 
     @model_validator(mode="after")
     def check_session_name(self) -> Self:
@@ -30,9 +57,43 @@ class DeviceSessionIn(DeviceSessionBase):
 
 
 class DeviceSessionOut(DeviceSessionBase):
-    is_active: bool = True
-    is_tracking: bool = True
-    created_at: datetime.datetime
-    saved_at: datetime.datetime | None
-    restored_at: datetime.datetime | None
-    last_active_at: datetime.datetime | None
+    is_active: bool = Field(
+        default=True, description="Flag indicating if the session is currently active."
+    )
+    is_tracking: bool = Field(
+        default=True,
+        description="Flag indicating if application usage tracking is enabled.",
+    )
+    created_at: datetime.datetime = Field(
+        description="Timestamp when the session was created."
+    )
+    saved_at: datetime.datetime | None = Field(
+        default=None,
+        description="Timestamp when the session was last saved.",
+    )
+    restored_at: datetime.datetime | None = Field(
+        default=None,
+        description="Timestamp when the session was last restored.",
+    )
+    last_active_at: datetime.datetime | None = Field(
+        default=None,
+        description="Timestamp when the session was last active.",
+    )
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "name": "Work Session",
+                    "description": "Session for development and meetings",
+                    "slugname": "work-session",
+                    "is_active": True,
+                    "is_tracking": True,
+                    "created_at": "2024-04-26T12:34:56.789Z",
+                    "saved_at": None,
+                    "restored_at": None,
+                    "last_active_at": "2024-04-26T14:12:34.123Z",
+                }
+            ]
+        }
+    }

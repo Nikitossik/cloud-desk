@@ -1,6 +1,5 @@
 from ..utils.repositories import BaseRepository
 from ..models import User
-from typing import Any
 
 
 class UserRepository(BaseRepository):

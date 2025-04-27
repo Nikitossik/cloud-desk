@@ -1,6 +1,5 @@
 from ..utils.repositories import BaseRepository
-from ..models import Device, Application
-from typing import Any
+from ..models import Device
 
 
 class DeviceRepository(BaseRepository):

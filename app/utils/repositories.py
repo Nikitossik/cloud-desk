@@ -1,12 +1,11 @@
 from sqlalchemy.orm import Session
-from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 from typing import Any
 from ..database import Base
 
 
 class BaseRepository:
-    model: Base | None = None
+    model: Base
 
     def __init__(self, db: Session):
         self._db: Session = db
@@ -15,13 +14,13 @@ class BaseRepository:
     def db(self):
         return self._db
 
-    def get(self, id):
+    def get(self, id: int | str) -> Base:
         return self.db.query(self.model).filter(self.model.id == id).first()
 
-    def get_multiple(self):
+    def get_multiple(self) -> list[Base]:
         return self.db.query(self.model).all()
 
-    def create(self, model_data: dict[str, Any]):
+    def create(self, model_data: dict[str, Any]) -> Base:
         new_instance = self.model(**model_data)
         self.db.add(new_instance)
         self.db.commit()
@@ -29,7 +28,7 @@ class BaseRepository:
 
         return new_instance
 
-    def update(self, db_model: Base, model_data: dict[str, Any]):
+    def update(self, db_model: Base, model_data: dict[str, Any]) -> Base:
         update_data = dict()
 
         if isinstance(model_data, dict):
@@ -46,13 +45,13 @@ class BaseRepository:
         self.db.refresh(db_model)
         return db_model
 
-    def delete(self, id):
+    def delete(self, id) -> Base:
         obj = self.db.query(self.model).get(id)
         self.db.delete(obj)
         self.db.commit()
         return obj
 
-    def delete_instance(self, instance: Base):
+    def delete_instance(self, instance: Base) -> Base:
         self.db.delete(instance)
         self.db.commit()
         return instance

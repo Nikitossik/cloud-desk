@@ -2,8 +2,6 @@ from ..utils.repositories import BaseRepository
 from ..models import Device, DeviceSession, DeviceSessionApps, Application
 from typing import Any
 
-from datetime import datetime
-
 
 class DeviceSessionrepository(BaseRepository):
     model = DeviceSession

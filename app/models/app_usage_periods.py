@@ -32,6 +32,5 @@ class AppUsagePeriods(Base):
     )
 
     @property
-    def duration(self) -> timedelta | None:
-        if self.started_at and self.ended_at:
-            return self.ended_at - self.started_at
+    def duration(self) -> timedelta:
+        return self.ended_at - self.started_at

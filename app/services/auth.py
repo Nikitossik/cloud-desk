@@ -1,6 +1,7 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from pydantic import ValidationError
+from typing import Any
 
 from ..repositories import UserRepository
 from ..schemas import UserIn, TokenPayload
@@ -41,7 +42,7 @@ class AuthService:
             )
         return user
 
-    def create_token_pair(self, user_email: str, user_password: str):
+    def create_token_pair(self, user_email: str, user_password: str) -> dict[str, Any]:
         user = self.authenticate_user(user_email, user_password)
 
         token_data = {"sub": str(user.id)}
@@ -55,7 +56,7 @@ class AuthService:
             "token_type": "bearer",
         }
 
-    def refresh_access_token(self, refresh_token: str):
+    def refresh_access_token(self, refresh_token: str) -> dict[str, Any]:
         try:
             payload = jwt.decode(
                 refresh_token, setting.REFRESH_SECRET_KEY, setting.ALGORITHM

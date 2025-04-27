@@ -69,7 +69,7 @@ class DeviceSessionService:
         usage_data = self.stop_session_tracking(session)
 
         if save_usage and usage_data:
-            self.save_session_app_usage(usage_data)
+            self.apps_usage_repo.save_apps_usage(usage_data)
 
         untracked_session = self.device_session_repo.update(
             session, {"is_tracking": False}
@@ -115,7 +115,7 @@ class DeviceSessionService:
         usage_data = self.stop_session_tracking(saved_session)
 
         if save_usage:
-            self.save_session_app_usage(usage_data)
+            self.apps_usage_repo.save_apps_usage(usage_data)
 
         return saved_session
 
@@ -133,15 +133,12 @@ class DeviceSessionService:
 
         return saved_session
 
-    def save_session_app_usage(self, usage_data: dict[str, Any]):
-        self.apps_usage_repo.save_apps_usage(usage_data)
-
     def save_session(self, session: DeviceSession) -> DeviceSession:
         saved_session = self.save_session_state(session)
 
         if saved_session.is_tracking:
             usage_data = self.stop_session_tracking(saved_session)
-            self.save_session_app_usage(usage_data)
+            self.apps_usage_repo.save_apps_usage(usage_data)
             self.start_session_tracking(saved_session)
 
         return saved_session

@@ -12,8 +12,9 @@ from app.models import (
     AppUsagePeriods,
 )
 import app.routes as r
+from api_docs.app_docs import APP_DOCS
 
-app = FastAPI()
+app = FastAPI(**APP_DOCS)
 
 
 Base.metadata.create_all(bind=engine)
