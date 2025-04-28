@@ -7,7 +7,6 @@ CloudDesk API is a backend application for managing user sessions, tracking appl
 - Python 3.11+
 - FastAPI
 - SQLAlchemy
-- Alembic
 - Uvicorn
 - SQLite
 - Windows 10/11 (current supported OS)
