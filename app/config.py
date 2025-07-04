@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     REFRESH_TOKEN_EXPIRE_MINUTES: int
     SQLALCHEMY_DATABASE_URL: str
+    HOST: str
 
     model_config = SettingsConfigDict(env_file=BASE_DIR / ".env")
 

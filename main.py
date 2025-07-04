@@ -13,6 +13,7 @@ from app.models import (
 )
 import app.routes as r
 from api_docs.app_docs import APP_DOCS
+from app.config import setting
 
 app = FastAPI(**APP_DOCS)
 
@@ -24,4 +25,4 @@ app.include_router(r.active_session_route)
 app.include_router(r.session_route)
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("main:app", host=setting.HOST, port=8000, reload=True)
