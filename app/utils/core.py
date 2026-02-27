@@ -25,42 +25,6 @@ def run_in_com(func: Callable) -> Callable:
     return wrapper
 
 
-def track_apps_usage(stop_event: threading.Event, usage_data: dict[str, Any]):
-    while not stop_event.is_set():
-        current_apps = get_running_applications()
-        now = datetime.now()
-
-        new_apps = {k: v for k, v in current_apps.items() if k not in usage_data}
-        apps_to_continue = {k: v for k, v in usage_data.items() if k in current_apps}
-        apps_to_end = {k: v for k, v in usage_data.items() if k not in current_apps}
-
-        for app_key, app_data in new_apps.items():
-            app_data["tracking"].append({"start": now})
-            usage_data[app_key] = app_data
-
-        for app_key, app_data in apps_to_continue.items():
-            if len(app_data["tracking"]) == 0 or (
-                "end" in app_data["tracking"][-1].keys()
-            ):
-                app_data["tracking"].append({"start": now})
-
-        for app_key, app_data in apps_to_end.items():
-            if len(app_data["tracking"]) != 0:
-                app_data["tracking"][-1].update({"end": now})
-
-        time.sleep(2)
-
-
-def end_apps_usage(usage_data: dict[str, Any]) -> dict[str, Any]:
-    for _, app_data in usage_data.items():
-        now = datetime.now()
-        for track in app_data["tracking"]:
-            if "end" not in track.keys():
-                track["end"] = now
-
-    return usage_data
-
-
 def get_mac_address() -> str:
     return ":".join(re.findall("..", "%012x" % uuid.getnode()))
 
