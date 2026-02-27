@@ -1,4 +1,4 @@
-from ..utils.repositories import BaseRepository
+from .base import BaseRepository
 from ..models import AppUsagePeriods, DeviceSessionApps, Application
 from typing import Any
 
