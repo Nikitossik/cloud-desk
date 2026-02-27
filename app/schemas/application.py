@@ -10,19 +10,6 @@ class ApplicationBase(BaseModel):
     exe: str = Field(description="Path to the executable file of the application.")
     cmdline: str = Field(description="Command line used to launch the application.")
 
-    model_config = {
-        "json_schema_extra": {
-            "examples": [
-                {
-                    "name": "Google Chrome",
-                    "exe": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-                    "cmdline": '"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"',
-                }
-            ]
-        }
-    }
-
-
 class ApplicationOut(ApplicationBase):
     pass
 
@@ -37,17 +24,6 @@ class ApplicationUsagePeriod(BaseModel):
         description="Timestamp when the application usage period ended."
     )
 
-    model_config = {
-        "json_schema_extra": {
-            "examples": [
-                {
-                    "started_at": "2024-04-26T10:00:00Z",
-                    "ended_at": "2024-04-26T11:00:00Z",
-                }
-            ]
-        }
-    }
-
 
 class ApplicationOutWithState(ApplicationOut):
     is_active: bool = Field(
@@ -59,26 +35,6 @@ class ApplicationOutWithState(ApplicationOut):
     total_seconds: int = Field(
         description="Total number of seconds the application was actively used during the session."
     )
-
-    model_config = {
-        "json_schema_extra": {
-            "examples": [
-                {
-                    "name": "Google Chrome",
-                    "exe": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-                    "cmdline": '"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"',
-                    "is_active": True,
-                    "usage_periods": [
-                        {
-                            "started_at": "2024-04-26T10:00:00Z",
-                            "ended_at": "2024-04-26T11:00:00Z",
-                        }
-                    ],
-                    "total_seconds": 3600,
-                }
-            ]
-        }
-    }
 
     @classmethod
     def from_state(cls, app_state: DeviceSessionApps):

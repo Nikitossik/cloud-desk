@@ -32,19 +32,6 @@ class DeviceSessionIn(DeviceSessionBase):
         description="Flag indicating if application tracking should be enabled for the session.",
     )
 
-    model_config = {
-        "json_schema_extra": {
-            "examples": [
-                {
-                    "name": "Work Session",
-                    "description": "Session for development and meetings",
-                    "activate": True,
-                    "enable_tracking": True,
-                }
-            ]
-        }
-    }
-
     @model_validator(mode="after")
     def check_session_name(self) -> Self:
         if not self.name or len(self.name.strip()) == 0:
@@ -79,21 +66,3 @@ class DeviceSessionOut(DeviceSessionBase):
         default=None,
         description="Timestamp when the session was last active.",
     )
-
-    model_config = {
-        "json_schema_extra": {
-            "examples": [
-                {
-                    "name": "Work Session",
-                    "description": "Session for development and meetings",
-                    "slugname": "work-session",
-                    "is_active": True,
-                    "is_tracking": True,
-                    "created_at": "2024-04-26T12:34:56.789Z",
-                    "saved_at": None,
-                    "restored_at": None,
-                    "last_active_at": "2024-04-26T14:12:34.123Z",
-                }
-            ]
-        }
-    }

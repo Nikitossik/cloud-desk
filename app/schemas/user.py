@@ -40,19 +40,6 @@ class UserIn(UserBase):
         description="The user's password. Must be at least 6 characters long.",
     )
 
-    model_config = {
-        "json_schema_extra": {
-            "examples": [
-                {
-                    "name": "John",
-                    "surname": "Doe",
-                    "email": "john.doe@example.com",
-                    "password": "securepassword123",
-                }
-            ]
-        }
-    }
-
 
 class UserOut(UserBase):
     id: int = Field(

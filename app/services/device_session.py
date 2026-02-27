@@ -145,7 +145,7 @@ class DeviceSessionService:
 
     def restore_session(self, session: DeviceSession, device: Device) -> DeviceSession:
         self.deactivate_last_active_session(device)
-
+        
         apps_to_restore = [
             ApplicationBase.model_validate(app).model_dump() for app in session.apps
         ]
