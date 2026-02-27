@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .device_session_apps import DeviceSessionApps
+    from .device_session import DeviceSession
 
 
 class AppUsagePeriods(Base):
@@ -20,15 +21,21 @@ class AppUsagePeriods(Base):
     session_app_id: so.Mapped[str] = so.mapped_column(
         sa.ForeignKey("device_session_apps.id")
     )
+    session_id: so.Mapped[str] = so.mapped_column(
+        sa.ForeignKey("device_session.id"), index=True
+    )
     started_at = so.mapped_column(
         sa.DateTime(), nullable=False, server_default=sa.func.now()
     )
     ended_at = so.mapped_column(
-        sa.DateTime(), nullable=False, server_default=sa.func.now()
+        sa.DateTime(), nullable=True
     )
 
     session_app: so.Mapped["DeviceSessionApps"] = so.relationship(
         "DeviceSessionApps", back_populates="usage_periods"
+    )
+    session: so.Mapped["DeviceSession"] = so.relationship(
+        "DeviceSession", back_populates="usage_periods"
     )
 
     @property

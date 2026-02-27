@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .device import Device
-
+    from .device_session_apps import DeviceSessionApps
 
 class Application(Base):
     __tablename__ = "application"
@@ -23,6 +23,12 @@ class Application(Base):
     device_id: so.Mapped[str] = so.mapped_column(sa.ForeignKey("device.id"))
 
     device: so.Mapped["Device"] = so.relationship("Device", back_populates="apps")
+    session_states: so.Mapped[list["DeviceSessionApps"]] = so.relationship(
+        "DeviceSessionApps",
+        back_populates="application",
+        cascade="all, delete-orphan",
+    )
+    
 
     def __repr__(self):
         return f"Application({self.name})"

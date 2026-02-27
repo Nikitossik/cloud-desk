@@ -1,6 +1,7 @@
 from pydantic import BaseModel, ConfigDict, model_validator, Field
 import datetime
 from typing_extensions import Self
+from typing import Any
 from coolname import generate_slug
 from slugify import slugify
 from .application import ApplicationBase
@@ -27,10 +28,6 @@ class DeviceSessionIn(DeviceSessionBase):
         default=True,
         description="Flag indicating if the session should be activated upon creation.",
     )
-    enable_tracking: bool = Field(
-        default=True,
-        description="Flag indicating if application tracking should be enabled for the session.",
-    )
 
     @model_validator(mode="after")
     def check_session_name(self) -> Self:
@@ -42,14 +39,9 @@ class DeviceSessionIn(DeviceSessionBase):
             self.slugname = slugify(self.name, max_length=150, word_boundary=True)
         return self
 
-
 class DeviceSessionOut(DeviceSessionBase):
     is_active: bool = Field(
         default=True, description="Flag indicating if the session is currently active."
-    )
-    is_tracking: bool = Field(
-        default=True,
-        description="Flag indicating if application usage tracking is enabled.",
     )
     created_at: datetime.datetime = Field(
         description="Timestamp when the session was created."

@@ -27,7 +27,9 @@ class DeviceSessionApps(Base):
     device_session: so.Mapped["DeviceSession"] = so.relationship(
         "DeviceSession", back_populates="app_states"
     )
-    application: so.Mapped["Application"] = so.relationship("Application")
+    application: so.Mapped["Application"] = so.relationship(
+        "Application", back_populates="session_states"
+    )
     usage_periods: so.Mapped[list["AppUsagePeriods"]] = so.relationship(
         "AppUsagePeriods",
         back_populates="session_app",

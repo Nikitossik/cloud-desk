@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from .device import Device
     from .device_session_apps import DeviceSessionApps
     from .application import Application
+    from .app_usage_periods import AppUsagePeriods
 
 
 class DeviceSession(Base):
@@ -23,7 +24,6 @@ class DeviceSession(Base):
     slugname: so.Mapped[str] = so.mapped_column(unique=True, index=True)
     description: so.Mapped[str | None]
     is_active: so.Mapped[bool] = so.mapped_column(sa.Boolean, default=True)
-    is_tracking: so.Mapped[bool] = so.mapped_column(sa.Boolean, default=True)
 
     created_at = so.mapped_column(sa.DateTime(), server_default=sa.func.now())
     saved_at = so.mapped_column(sa.DateTime(), nullable=True)
@@ -42,4 +42,9 @@ class DeviceSession(Base):
     apps: so.Mapped[list["Application"]] = so.relationship(
         "Application",
         secondary="device_session_apps",
+    )
+    usage_periods: so.Mapped[list["AppUsagePeriods"]] = so.relationship(
+        "AppUsagePeriods",
+        back_populates="session",
+        cascade="all, delete-orphan",
     )

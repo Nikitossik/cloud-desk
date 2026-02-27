@@ -2,6 +2,7 @@ from ..repositories import DeviceRepository, Applicationrepository
 from sqlalchemy.orm import Session
 import app.utils.core as uc
 from ..models import Device, Application
+from typing import Any
 
 
 class DeviceService:
@@ -21,8 +22,10 @@ class DeviceService:
 
         return device
 
-    def sync_applications(self, device: Device) -> list[Application]:
-        apps = uc.get_running_applications()
+    def sync_applications(
+        self, device: Device, apps_data: dict[str, Any] | None = None
+    ) -> list[Application]:
+        apps = apps_data if apps_data is not None else uc.get_running_applications()
 
         for app in apps.values():
             found_app = self.application_repo.get_by_device_and_exe(
