@@ -99,44 +99,6 @@ def save_active_session(
 
 
 @active_session_route.post(
-    "/enable-tracking",
-    description=(DOCS_PATH / "enable_active_session_tracking.md").read_text(),
-    summary="Enables tracking of active application usage within the current session.",
-    status_code=status.HTTP_201_CREATED,
-    response_model=sch.DeviceSessionOut,
-)
-def enable_active_session_tracking(
-    *,
-    db: Annotated[so.Session, Depends(d.get_db)],
-    device: Annotated[md.Device, Depends(d.get_current_device)],
-    active_session: Annotated[md.DeviceSession, Depends(d.get_active_session)],
-):
-    DeviceService(db).sync_applications(device)
-    return DeviceSessionService(db).enable_session_tracking(active_session)
-
-
-@active_session_route.post(
-    "/disable-tracking",
-    description=(DOCS_PATH / "disable_active_session_tracking.md").read_text(),
-    summary=(
-        "Disables tracking of active application usage within the current session.",
-        "Optionally saves the application usage data before disabling tracking.",
-    ),
-    status_code=status.HTTP_201_CREATED,
-    response_model=sch.DeviceSessionOut,
-)
-def disable_active_session_tracking(
-    *,
-    db: Annotated[so.Session, Depends(d.get_db)],
-    device: Annotated[md.Device, Depends(d.get_current_device)],
-    active_session: Annotated[md.DeviceSession, Depends(d.get_active_session)],
-    save_usage: Annotated[bool, Query()] = True,
-):
-    DeviceService(db).sync_applications(device)
-    return DeviceSessionService(db).disable_session_tracking(active_session, save_usage)
-
-
-@active_session_route.post(
     "/deactivate",
     description=(DOCS_PATH / "deactivate_active_session.md").read_text(),
     summary=(

@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
-from ..tracking.app_usage import SessionAppUsageTracker
+from .session_tracker import SessionTracker
 from ..models import Device, DeviceSession
 from ..repositories import DeviceSessionrepository, AppsUsageRepository
 from ..schemas import DeviceSessionIn, ApplicationBase
@@ -21,7 +21,6 @@ class DeviceSessionService:
 
         session_data["device_id"] = device.id
         session_data["is_active"] = session_data["activate"]
-        session_data["is_tracking"] = session_data["enable_tracking"]
 
         if session_data["is_active"]:
             self.deactivate_last_active_session(device)
@@ -38,47 +37,12 @@ class DeviceSessionService:
 
         new_session = self.device_session_repo.create(session_data)
 
-        if new_session.is_tracking:
-            self.start_session_tracking(new_session)
+        SessionTracker.start(new_session.id)
 
         return new_session
 
-    def start_session_tracking(self, session: DeviceSession):
-        # running tracker
-
-        SessionAppUsageTracker.set(session.id)
-        SessionAppUsageTracker.start(session.id)
-
-    def enable_session_tracking(self, session: DeviceSession) -> DeviceSession:
-        if SessionAppUsageTracker.get(session.id):
-            return session
-
-        if not session.is_tracking:
-            session = self.device_session_repo.update(session, {"is_tracking": True})
-
-        self.start_session_tracking(session)
-
-        return session
-
-    def stop_session_tracking(self, session: DeviceSession):
-        return SessionAppUsageTracker.stop(session.id)
-
-    def disable_session_tracking(
-        self, session: DeviceSession, save_usage: bool = True
-    ) -> DeviceSession:
-        usage_data = self.stop_session_tracking(session)
-
-        if save_usage and usage_data:
-            self.apps_usage_repo.save_apps_usage(usage_data)
-
-        untracked_session = self.device_session_repo.update(
-            session, {"is_tracking": False}
-        )
-
-        return untracked_session
-
     def delete_session(self, session: DeviceSession):
-        SessionAppUsageTracker.unset(session.id)
+        SessionTracker.unset(session.id)
         self.device_session_repo.delete_instance(session)
 
     def activate_session(self, session: DeviceSession, device: Device) -> DeviceSession:
@@ -91,8 +55,7 @@ class DeviceSessionService:
             session, {"is_active": True}
         )
 
-        if activated_session.is_tracking:
-            self.start_session_tracking(activated_session)
+        SessionTracker.start(activated_session.id)
 
         return activated_session
 
@@ -112,9 +75,9 @@ class DeviceSessionService:
             {"is_active": False, "last_active_at": datetime.now()},
         )
 
-        usage_data = self.stop_session_tracking(saved_session)
+        usage_data = SessionTracker.stop(saved_session.id)
 
-        if save_usage:
+        if save_usage and usage_data:
             self.apps_usage_repo.save_apps_usage(usage_data)
 
         return saved_session
@@ -136,10 +99,9 @@ class DeviceSessionService:
     def save_session(self, session: DeviceSession) -> DeviceSession:
         saved_session = self.save_session_state(session)
 
-        if saved_session.is_tracking:
-            usage_data = self.stop_session_tracking(saved_session)
-            self.apps_usage_repo.save_apps_usage(usage_data)
-            self.start_session_tracking(saved_session)
+        usage_data = SessionTracker.stop(saved_session.id)
+        self.apps_usage_repo.save_apps_usage(usage_data)
+        SessionTracker.start(saved_session.id)
 
         return saved_session
 
