@@ -8,10 +8,10 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .device import Device
-    from .device_session_apps import DeviceSessionApps
+    from .session_app_state import SessionAppState
 
 class Application(Base):
-    __tablename__ = "application"
+    __tablename__ = "applications"
 
     id: so.Mapped[str] = so.mapped_column(
         sa.Uuid(), primary_key=True, default=uuid.uuid4
@@ -20,15 +20,16 @@ class Application(Base):
     exe: so.Mapped[str]
     cmdline: so.Mapped[str | None]
 
-    device_id: so.Mapped[str] = so.mapped_column(sa.ForeignKey("device.id"))
+    device_id: so.Mapped[str] = so.mapped_column(sa.ForeignKey("devices.id"))
 
     device: so.Mapped["Device"] = so.relationship("Device", back_populates="apps")
-    session_states: so.Mapped[list["DeviceSessionApps"]] = so.relationship(
-        "DeviceSessionApps",
+    session_app_states: so.Mapped[list["SessionAppState"]] = so.relationship(
+        "SessionAppState",
         back_populates="application",
         cascade="all, delete-orphan",
     )
     
-
-    def __repr__(self):
-        return f"Application({self.name})"
+    __table_args__ = (
+        sa.UniqueConstraint("device_id", "exe", name="uq_device_exe"),
+    )
+    

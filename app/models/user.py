@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 class User(Base):
-    __tablename__ = "user"
+    __tablename__ = "users"
 
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     name: so.Mapped[str] = so.mapped_column(sa.String(20))

@@ -2,7 +2,7 @@ import threading
 import app.utils.core as core
 from typing import Any
 from ..database import SessionLocal
-from ..repositories import DeviceSessionrepository, AppsUsageRepository
+from ..repositories import DeviceSessionRepository, AppUsageRepository
 from ..services.device import DeviceService
 from datetime import datetime
 
@@ -86,8 +86,8 @@ class SessionTracker:
             db = SessionLocal()
 
             try:
-                session_repo = DeviceSessionrepository(db)
-                usage_repo = AppsUsageRepository(db)
+                session_repo = DeviceSessionRepository(db)
+                usage_repo = AppUsageRepository(db)
                 
                 session = session_repo.get(SessionTracker.session_id)
 
@@ -212,7 +212,7 @@ class SessionTracker:
             if SessionTracker.usage_data:
                 db = SessionLocal()
                 try:
-                    usage_repo = AppsUsageRepository(db)
+                    usage_repo = AppUsageRepository(db)
 
                     SessionTracker.end_apps_usage()
                     usage_to_save = SessionTracker.extract_closed_usage()

@@ -1,9 +1,9 @@
 from .base import BaseRepository
-from ..models import Device, DeviceSession, DeviceSessionApps, Application
+from ..models import Device, DeviceSession, SessionAppState, Application
 from typing import Any
 
 
-class DeviceSessionrepository(BaseRepository):
+class DeviceSessionRepository(BaseRepository):
     model = DeviceSession
 
     def get_by_slugname(self, slugname: str, device: Device) -> DeviceSession | None:
@@ -23,10 +23,10 @@ class DeviceSessionrepository(BaseRepository):
     def clone_state(
         self, original_session: DeviceSession, clone_session: DeviceSession
     ) -> DeviceSession:
-        for app_state in original_session.app_states:
-            cloned_app_state = DeviceSessionApps(
-                application_id=app_state.application_id,
-                device_session_id=clone_session.id,
+        for session_app_state in original_session.session_app_states:
+            cloned_app_state = SessionAppState(
+                application_id=session_app_state.application_id,
+                session_id=clone_session.id,
             )
             self.db.add(cloned_app_state)
 
@@ -37,8 +37,8 @@ class DeviceSessionrepository(BaseRepository):
     def update_apps_state(
         self, session: DeviceSession, apps_data: dict[str, Any]
     ) -> DeviceSession:
-        for app_state in session.app_states:
-            app_state.is_active = False
+        for session_app_state in session.session_app_states:
+            session_app_state.is_active = False
 
         self.db.commit()
 
@@ -55,20 +55,20 @@ class DeviceSessionrepository(BaseRepository):
             if not found_app:
                 continue
 
-            app_states = [
-                app_state
-                for app_state in session.app_states
-                if app_state.application_id == found_app.id
+            session_app_states = [
+                session_app_state
+                for session_app_state in session.session_app_states
+                if session_app_state.application_id == found_app.id
             ]
 
-            if len(app_states):
-                app_state = app_states[0]
-                app_state.is_active = True
+            if len(session_app_states):
+                session_app_state = session_app_states[0]
+                session_app_state.is_active = True
             else:
-                app_state = DeviceSessionApps(
-                    device_session_id=session.id, application_id=found_app.id
+                session_app_state = SessionAppState(
+                    session_id=session.id, application_id=found_app.id
                 )
-                self.db.add(app_state)
+                self.db.add(session_app_state)
 
         self.db.commit()
 

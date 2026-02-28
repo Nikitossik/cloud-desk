@@ -8,8 +8,8 @@ from app.models import (
     Device,
     Application,
     DeviceSession,
-    DeviceSessionApps,
-    AppUsagePeriods,
+    SessionAppState,
+    AppUsagePeriod,
 )
 import app.routes as r
 from api_docs.app_docs import APP_DOCS

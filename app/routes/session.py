@@ -84,7 +84,7 @@ def get_session_apps(
     session = DeviceSessionService(db).get_session_by_slugname(session_slug, device)
     return [
         sch.ApplicationOutWithState.from_state(app_state)
-        for app_state in session.app_states
+        for app_state in session.session_app_states
     ]
 
 

@@ -9,13 +9,13 @@ from typing_extensions import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .device import Device
-    from .device_session_apps import DeviceSessionApps
+    from .session_app_state import SessionAppState
     from .application import Application
-    from .app_usage_periods import AppUsagePeriods
+    from .app_usage_period import AppUsagePeriod
 
 
 class DeviceSession(Base):
-    __tablename__ = "device_session"
+    __tablename__ = "device_sessions"
 
     id: so.Mapped[str] = so.mapped_column(
         sa.Uuid(), primary_key=True, default=uuid.uuid4
@@ -32,19 +32,19 @@ class DeviceSession(Base):
 
     # relations
 
-    device_id: so.Mapped[str] = so.mapped_column(sa.ForeignKey("device.id"))
+    device_id: so.Mapped[str] = so.mapped_column(sa.ForeignKey("devices.id"))
     device: so.Mapped["Device"] = so.relationship("Device", back_populates="sessions")
-    app_states: so.Mapped[list["DeviceSessionApps"]] = so.relationship(
-        "DeviceSessionApps",
+    session_app_states: so.Mapped[list["SessionAppState"]] = so.relationship(
+        "SessionAppState",
         back_populates="device_session",
         cascade="all, delete-orphan",
     )
     apps: so.Mapped[list["Application"]] = so.relationship(
         "Application",
-        secondary="device_session_apps",
+        secondary="session_app_states",
     )
-    usage_periods: so.Mapped[list["AppUsagePeriods"]] = so.relationship(
-        "AppUsagePeriods",
+    usage_periods: so.Mapped[list["AppUsagePeriod"]] = so.relationship(
+        "AppUsagePeriod",
         back_populates="session",
         cascade="all, delete-orphan",
     )

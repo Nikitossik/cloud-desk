@@ -4,8 +4,6 @@ from typing_extensions import Self
 from typing import Any
 from coolname import generate_slug
 from slugify import slugify
-from .application import ApplicationBase
-
 
 class DeviceSessionBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -39,6 +37,22 @@ class DeviceSessionIn(DeviceSessionBase):
             self.slugname = slugify(self.name, max_length=150, word_boundary=True)
         return self
 
+
+class Application(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    name: str
+class SessionApplication(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    is_active: bool
+    application: Application
+    
+class UsagePeriod(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    started_at: datetime.datetime
+    ended_at: datetime.datetime
+    duration: datetime.timedelta
+    session_app_state: SessionApplication
+        
 class DeviceSessionOut(DeviceSessionBase):
     is_active: bool = Field(
         default=True, description="Flag indicating if the session is currently active."
@@ -58,3 +72,5 @@ class DeviceSessionOut(DeviceSessionBase):
         default=None,
         description="Timestamp when the session was last active.",
     )
+    
+    usage_periods: list[UsagePeriod]

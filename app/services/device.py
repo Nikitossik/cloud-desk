@@ -1,4 +1,4 @@
-from ..repositories import DeviceRepository, Applicationrepository
+from ..repositories import DeviceRepository, ApplicationRepository
 from sqlalchemy.orm import Session
 import app.utils.core as uc
 from ..models import Device, Application
@@ -8,7 +8,7 @@ from typing import Any
 class DeviceService:
     def __init__(self, db: Session):
         self.device_repo: DeviceRepository = DeviceRepository(db)
-        self.application_repo: Applicationrepository = Applicationrepository(db)
+        self.application_repo: ApplicationRepository = ApplicationRepository(db)
 
     def create_or_get_device(self, user_id: int) -> Device:
         mac_address = uc.get_mac_address()

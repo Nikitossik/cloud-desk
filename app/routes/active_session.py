@@ -41,7 +41,7 @@ def get_active_session_apps(
 ):
     return [
         sch.ApplicationOutWithState.from_state(app_state)
-        for app_state in active_session.app_states
+        for app_state in active_session.session_app_states
     ]
 
 

@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from .session_tracker import SessionTracker
 from ..models import Device, DeviceSession
-from ..repositories import DeviceSessionrepository, AppsUsageRepository
+from ..repositories import DeviceSessionRepository, AppUsageRepository
 from ..schemas import DeviceSessionIn, ApplicationBase
 import app.utils.core as uc
 from datetime import datetime, timezone
@@ -11,8 +11,8 @@ from typing import Any
 
 class DeviceSessionService:
     def __init__(self, db: Session):
-        self.device_session_repo: DeviceSessionrepository = DeviceSessionrepository(db)
-        self.apps_usage_repo: AppsUsageRepository = AppsUsageRepository(db)
+        self.device_session_repo: DeviceSessionRepository = DeviceSessionRepository(db)
+        self.app_usage_repo: AppUsageRepository = AppUsageRepository(db)
 
     def create_session(
         self, device_session: DeviceSessionIn, device: Device
@@ -78,7 +78,7 @@ class DeviceSessionService:
         usage_data = SessionTracker.stop(saved_session.id)
 
         if save_usage and usage_data:
-            self.apps_usage_repo.save_apps_usage(usage_data)
+            self.app_usage_repo.save_apps_usage(usage_data)
 
         return saved_session
 
@@ -100,7 +100,7 @@ class DeviceSessionService:
         saved_session = self.save_session_state(session)
 
         usage_data = SessionTracker.stop(saved_session.id)
-        self.apps_usage_repo.save_apps_usage(usage_data)
+        self.app_usage_repo.save_apps_usage(usage_data)
         SessionTracker.start(saved_session.id)
 
         return saved_session

@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict, Field
-from ..models import DeviceSessionApps
+from ..models import SessionAppState
 from datetime import datetime
 
 
@@ -37,7 +37,7 @@ class ApplicationOutWithState(ApplicationOut):
     )
 
     @classmethod
-    def from_state(cls, app_state: DeviceSessionApps):
+    def from_state(cls, app_state: SessionAppState):
         return {
             "name": app_state.application.name,
             "exe": app_state.application.exe,
