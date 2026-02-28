@@ -3,16 +3,22 @@ from fastapi import HTTPException, status
 from .session_tracker import SessionTracker
 from ..models import Device, DeviceSession
 from ..repositories import DeviceSessionRepository, AppUsageRepository
-from ..schemas import DeviceSessionIn, ApplicationBase
+from ..schemas.device_session import DeviceSessionIn, DeviceSessionWithReport, DeviceSessionOut
+from ..schemas.application import ApplicationBase   
 import app.utils.core as uc
 from datetime import datetime, timezone
+import time
 from typing import Any
-
 
 class DeviceSessionService:
     def __init__(self, db: Session):
         self.device_session_repo: DeviceSessionRepository = DeviceSessionRepository(db)
         self.app_usage_repo: AppUsageRepository = AppUsageRepository(db)
+    
+    def get_application_usage(self, session: DeviceSession, device: Device) -> dict[str, Any]:
+        usage_data = self.device_session_repo.get_application_usage(session, device)
+
+        return usage_data
 
     def create_session(
         self, device_session: DeviceSessionIn, device: Device
@@ -100,22 +106,32 @@ class DeviceSessionService:
 
         return saved_session
 
-    def restore_session(self, session: DeviceSession, device: Device) -> DeviceSession:
+    def restore_session(self, session: DeviceSession, device: Device) -> DeviceSessionWithReport:
         self.deactivate_last_active_session(device)
         
+        # only restoring apps that were active in session
         apps_to_restore = [
-            ApplicationBase.model_validate(app).model_dump() for app in session.apps
+            ApplicationBase.model_validate(app_state.application).model_dump() for app_state in session.session_app_states if app_state.is_active
         ]
 
-        uc.run_applications(apps_to_restore)
+        restore_report = uc.run_applications(apps_to_restore)
         new_active_session = self.activate_session(session, device)
+        
+        time.sleep(1)
+        running_apps_data = uc.get_running_applications()
+        self.device_session_repo.update_apps_state(
+            new_active_session, running_apps_data
+        )
 
         # datetime of restoring
         self.device_session_repo.update(
             new_active_session, {"restored_at": datetime.now(tz=timezone.utc)}
         )
 
-        return new_active_session
+        return DeviceSessionWithReport(
+            **DeviceSessionOut.model_validate(new_active_session).model_dump(),
+            report=restore_report
+        )
 
     def delete_session_by_slugname(self, session_slug: str, device: Device):
         session = self.get_session_by_slugname(session_slug, device)
@@ -168,8 +184,7 @@ class DeviceSessionService:
 
     def restore_session_by_slug(
         self, session_slug: str, device: Device
-    ) -> DeviceSession:
+    ) -> DeviceSessionWithReport:
         session_to_restore = self.get_session_by_slugname(session_slug, device)
 
-        restored_session = self.restore_session(session_to_restore, device)
-        return restored_session
+        return self.restore_session(session_to_restore, device)

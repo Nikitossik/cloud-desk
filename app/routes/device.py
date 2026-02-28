@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, status
 import sqlalchemy.orm as so
 from typing import Annotated
-import app.schemas as sch
+from ..schemas.device import DeviceBase
+from ..schemas.application import ApplicationBase
 import app.models as md
 from ..services import DeviceService
 from ..dependencies.database import get_db
@@ -16,7 +17,7 @@ DOCS_PATH = Path(__file__).parent.parent.parent / "api_docs" / "device"
     "/",
     description=(DOCS_PATH / "get_device.md").read_text(),
     summary="Retrieves details about the currently registered device.",
-    response_model=sch.DeviceBase,
+    response_model=DeviceBase,
 )
 def get_device(device: Annotated[md.Device, Depends(get_current_device)]):
     return device
@@ -38,10 +39,11 @@ def delete_current_device(
 @device_route.get(
     "/apps",
     description=(DOCS_PATH / "get_device_apps.md").read_text(),
-    summary="Synchronizes the device's applications that were opened in sessions so far and retrieves the list.",
+    summary="Retrieves the list of the device's applications.",
+    response_model=list[ApplicationBase],
 )
 def get_device_apps(
     db: Annotated[so.Session, Depends(get_db)],
     device: Annotated[md.Device, Depends(get_current_device)],
 ):
-    return DeviceService(db).sync_applications(device)
+    return device.apps

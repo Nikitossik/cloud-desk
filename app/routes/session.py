@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, status
 import sqlalchemy.orm as so
-import app.schemas as sch
+from ..schemas.device_session import DeviceSessionIn, DeviceSessionOut, DeviceSessionWithReport
+from ..schemas.application import FullApplicationOut
 import app.models as md
 import app.dependencies as d
 from ..services import DeviceSessionService
@@ -15,7 +16,7 @@ DOCS_PATH = Path(__file__).parent.parent.parent / "api_docs" / "session"
     "/",
     description=(DOCS_PATH / "get_session_all.md").read_text(),
     summary="Retrieves a list of all saved sessions for the authenticated user's device.",
-    response_model=list[sch.DeviceSessionOut],
+    response_model=list[DeviceSessionOut],
 )
 def get_all_sessions(
     *,
@@ -29,13 +30,13 @@ def get_all_sessions(
     description=(DOCS_PATH / "post_session_create.md").read_text(),
     summary=("Creates a new session for the authenticated user's device.",),
     status_code=status.HTTP_201_CREATED,
-    response_model=sch.DeviceSessionOut,
+    response_model=DeviceSessionOut,
 )
 def create_session(
     *,
     db: Annotated[so.Session, Depends(d.get_db)],
     device: Annotated[md.Device, Depends(d.get_current_device)],
-    device_session: sch.DeviceSessionIn,
+    device_session: DeviceSessionIn,
 ):
     return DeviceSessionService(db).create_session(device_session, device)
 
@@ -58,7 +59,7 @@ def delete_all_sessions(
     "/{session_slug}",
     description=(DOCS_PATH / "get_session_by_slug.md").read_text(),
     summary=("Retrieves details of a specific saved session based on its slugname.",),
-    response_model=sch.DeviceSessionOut,
+    response_model=DeviceSessionOut,
 )
 def get_session_by_slug(
     *,
@@ -71,9 +72,7 @@ def get_session_by_slug(
 
 @session_route.get(
     "/{session_slug}/apps",
-    description=(DOCS_PATH / "get_session_apps.md").read_text(),
-    summary=("Retrieves a list of applications associated with the given session.",),
-    response_model=list[sch.ApplicationOutWithState],
+    response_model=list[FullApplicationOut],
 )
 def get_session_apps(
     *,
@@ -81,11 +80,7 @@ def get_session_apps(
     device: Annotated[md.Device, Depends(d.get_current_device)],
     session_slug: str,
 ):
-    session = DeviceSessionService(db).get_session_by_slugname(session_slug, device)
-    return [
-        sch.ApplicationOutWithState.from_state(app_state)
-        for app_state in session.session_app_states
-    ]
+    return DeviceSessionService(db).get_application_usage(session_slug, device)
 
 
 @session_route.post(
@@ -96,14 +91,14 @@ def get_session_apps(
         "If no session name is provided for the clone, a slugified name will be automatically generated.",
     ),
     status_code=status.HTTP_201_CREATED,
-    response_model=sch.DeviceSessionOut,
+    response_model=DeviceSessionOut,
 )
 def clone_session_with_slugname(
     *,
     db: Annotated[so.Session, Depends(d.get_db)],
     device: Annotated[md.Device, Depends(d.get_current_device)],
     slugname: str,
-    device_session: sch.DeviceSessionIn,
+    device_session: DeviceSessionIn,
 ):
     return DeviceSessionService(db).clone_session_by_slugname(
         slugname, device_session, device
@@ -129,7 +124,7 @@ def delete_session_by_slug(
     "/{session_slug}/activate",
     description=(DOCS_PATH / "post_session_activate.md").read_text(),
     summary="Activates the selected saved session for the authenticated device.",
-    response_model=sch.DeviceSessionOut,
+    response_model=DeviceSessionOut,
 )
 def activate_sessin_by_slug(
     *,
@@ -144,7 +139,7 @@ def activate_sessin_by_slug(
     "/{session_slug}/restore",
     description=(DOCS_PATH / "post_session_restore.md").read_text(),
     summary="Restores a saved session and optionally reopens applications according to the saved session state.",
-    response_model=sch.DeviceSessionOut,
+    response_model=DeviceSessionWithReport,
 )
 def restore_session(
     *,

@@ -23,33 +23,14 @@ class ApplicationUsagePeriod(BaseModel):
     ended_at: datetime = Field(
         description="Timestamp when the application usage period ended."
     )
+    
 
-
-class ApplicationOutWithState(ApplicationOut):
+class FullApplicationOut(ApplicationBase):
     is_active: bool = Field(
         description="Flag indicating if the application is currently active in the session."
     )
     usage_periods: list[ApplicationUsagePeriod] = Field(
-        description="List of periods when the application was actively used."
-    )
-    total_seconds: int = Field(
-        description="Total number of seconds the application was actively used during the session."
+        description="List of usage periods for the application during the session."
     )
 
-    @classmethod
-    def from_state(cls, app_state: SessionAppState):
-        return {
-            "name": app_state.application.name,
-            "exe": app_state.application.exe,
-            "cmdline": app_state.application.cmdline,
-            "is_active": app_state.is_active,
-            "usage_periods": app_state.usage_periods,
-            "total_seconds": int(
-                sum(
-                    [
-                        period.duration.total_seconds()
-                        for period in app_state.usage_periods
-                    ]
-                )
-            ),
-        }
+

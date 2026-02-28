@@ -1,7 +1,8 @@
 from .base import BaseRepository
-from ..models import Device, DeviceSession, SessionAppState, Application
+from ..models import Device, DeviceSession, SessionAppState, Application, AppUsagePeriod
 from typing import Any
-
+import sqlalchemy as sa
+from collections import OrderedDict
 
 class DeviceSessionRepository(BaseRepository):
     model = DeviceSession
@@ -19,6 +20,52 @@ class DeviceSessionRepository(BaseRepository):
                 return session
 
         return None
+    
+    def get_application_usage(self, slugname: str, device: Device):
+        session = self.get_by_slugname(slugname, device)
+
+        if not session: 
+            return None
+        
+        rows = (
+        self.db.query(SessionAppState, Application, AppUsagePeriod)
+            .join(
+                Application,
+                SessionAppState.application_id == Application.id,
+            )
+            .outerjoin(
+                AppUsagePeriod,
+                sa.and_(
+                    AppUsagePeriod.application_id == Application.id,
+                    AppUsagePeriod.session_id == SessionAppState.session_id,
+                ),
+            )
+            .filter(SessionAppState.session_id == session.id)
+            .order_by(Application.name.asc(), AppUsagePeriod.started_at.asc())
+            .all()
+        )
+        
+        result_map = OrderedDict()
+
+        for app_state, app, usage in rows:
+            if app.id not in result_map:
+                result_map[app.id] = {
+                    "name": app.name,
+                    "exe": app.exe,           
+                    "cmdline": app.cmdline,
+                    "is_active": app_state.is_active,
+                    "usage_periods": [],
+                }
+
+            if usage is not None:
+                result_map[app.id]["usage_periods"].append(
+                    {
+                        "started_at": usage.started_at,
+                        "ended_at": usage.ended_at,
+                    }
+                )
+
+        return list(result_map.values())
 
     def clone_state(
         self, original_session: DeviceSession, clone_session: DeviceSession

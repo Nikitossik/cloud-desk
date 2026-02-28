@@ -36,18 +36,6 @@ class DeviceSessionIn(DeviceSessionBase):
         else:
             self.slugname = slugify(self.name, max_length=150, word_boundary=True)
         return self
-
-
-class Application(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-    name: str
-    
-class UsagePeriod(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-    started_at: datetime.datetime
-    ended_at: datetime.datetime
-    duration: datetime.timedelta
-    application: Application
         
 class DeviceSessionOut(DeviceSessionBase):
     is_active: bool = Field(
@@ -69,4 +57,6 @@ class DeviceSessionOut(DeviceSessionBase):
         description="Timestamp when the session was last active.",
     )
     
-    usage_periods: list[UsagePeriod]
+
+class DeviceSessionWithReport(DeviceSessionOut):
+    report: list[Any]

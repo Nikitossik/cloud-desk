@@ -11,7 +11,7 @@ from typing import Any
 from datetime import datetime
 import threading
 from typing import Callable
-
+import shlex
 
 def run_in_com(func: Callable) -> Callable:
     @wraps(func)
@@ -84,10 +84,67 @@ def get_running_applications() -> dict[str, Any]:
     return apps_data_dict
 
 
-def run_applications(apps: list[dict[str, Any]]):
+# def run_applications(apps: list[dict[str, Any]]):
+#     current_apps = get_running_applications()
+
+#     for app in apps:
+#         if app["exe"] in [a["exe"] for a in current_apps.values()]:
+#             continue
+#         subprocess.call(app["cmdline"].split())
+
+def run_applications(apps: list[dict[str, Any]]) -> dict[str, Any]:
     current_apps = get_running_applications()
+    current_exes = {a["exe"] for a in current_apps.values()}
+
+    results = []
 
     for app in apps:
-        if app["exe"] in [a["exe"] for a in current_apps.values()]:
+        exe = app.get("exe")
+        cmdline = app.get("cmdline") or ""
+        name = app.get("name") or exe
+
+        if exe in current_exes:
+            results.append({
+                "exe": exe,
+                "name": name,
+                "status": "already_running",
+                "reason": None,
+            })
             continue
-        subprocess.call(app["cmdline"].split())
+
+        try:
+            args = shlex.split(cmdline, posix=False) if cmdline else [exe]
+            if not args:
+                args = [exe]
+
+            subprocess.Popen(args)
+            results.append({
+                "exe": exe,
+                "name": name,
+                "status": "started",
+                "reason": None,
+            })
+
+        except PermissionError as e:
+            results.append({
+                "exe": exe,
+                "name": name,
+                "status": "failed_access_denied",
+                "reason": str(e),
+            })
+        except FileNotFoundError as e:
+            results.append({
+                "exe": exe,
+                "name": name,
+                "status": "failed_not_found",
+                "reason": str(e),
+            })
+        except Exception as e:
+            results.append({
+                "exe": exe,
+                "name": name,
+                "status": "failed_exception",
+                "reason": str(e),
+            })
+
+    return results

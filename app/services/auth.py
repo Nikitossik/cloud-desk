@@ -4,7 +4,7 @@ from pydantic import ValidationError
 from typing import Any
 
 from ..repositories import UserRepository
-from ..schemas import UserIn, TokenPayload
+from ..schemas.user import UserIn, TokenPayload
 from ..models import User
 import jwt
 import app.utils.security as us

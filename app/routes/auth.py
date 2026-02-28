@@ -4,7 +4,7 @@ from typing import Annotated
 from ..models import User
 from ..dependencies import get_db, get_current_user
 from sqlalchemy.orm import Session
-from ..schemas import Token, UserIn, UserOut
+from ..schemas.user import Token, UserIn, UserOut
 from ..services import AuthService
 from pathlib import Path
 
