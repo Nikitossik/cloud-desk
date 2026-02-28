@@ -42,7 +42,7 @@ class DeviceSessionService:
         return new_session
 
     def delete_session(self, session: DeviceSession):
-        SessionTracker.unset(session.id)
+        SessionTracker.stop(session.id)
         self.device_session_repo.delete_instance(session)
 
     def activate_session(self, session: DeviceSession, device: Device) -> DeviceSession:
@@ -75,10 +75,7 @@ class DeviceSessionService:
             {"is_active": False, "last_active_at": datetime.now()},
         )
 
-        usage_data = SessionTracker.stop(saved_session.id)
-
-        if save_usage and usage_data:
-            self.app_usage_repo.save_apps_usage(usage_data)
+        SessionTracker.stop(saved_session.id)
 
         return saved_session
 
@@ -99,8 +96,6 @@ class DeviceSessionService:
     def save_session(self, session: DeviceSession) -> DeviceSession:
         saved_session = self.save_session_state(session)
 
-        usage_data = SessionTracker.stop(saved_session.id)
-        self.app_usage_repo.save_apps_usage(usage_data)
         SessionTracker.start(saved_session.id)
 
         return saved_session

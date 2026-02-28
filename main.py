@@ -14,9 +14,9 @@ from app.models import (
 import app.routes as r
 from api_docs.app_docs import APP_DOCS
 from app.config import setting
+from app.utils.lifespan import lifespan
 
-app = FastAPI(**APP_DOCS)
-
+app = FastAPI(**APP_DOCS, lifespan=lifespan)
 
 Base.metadata.create_all(bind=engine)
 app.include_router(r.auth_route)

@@ -233,7 +233,3 @@ class SessionTracker:
             SessionTracker.usage_data = {}
             print("[SessionTracker] state cleared")
             return None
-
-    @staticmethod
-    def unset(session_id: str):
-        SessionTracker.stop(session_id)
