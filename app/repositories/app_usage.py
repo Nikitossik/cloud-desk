@@ -33,7 +33,7 @@ class AppUsageRepository(BaseRepository):
                 start, end = track["start"], track["end"]
 
                 usagePeriod = AppUsagePeriod(
-                    session_app_state_id=session_app.id,
+                    application_id=session_app.application_id,
                     session_id=session_app.session_id,
                     started_at=start,
                     ended_at=end,

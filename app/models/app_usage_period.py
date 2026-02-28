@@ -8,7 +8,7 @@ from datetime import timedelta
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .device_session_apps import DeviceSessionApps
+    from .application import Application
     from .device_session import DeviceSession
 
 
@@ -18,8 +18,8 @@ class AppUsagePeriod(Base):
     id: so.Mapped[str] = so.mapped_column(
         sa.Uuid(), primary_key=True, default=uuid.uuid4
     )
-    session_app_state_id: so.Mapped[str] = so.mapped_column(
-        sa.ForeignKey("session_app_states.id")
+    application_id: so.Mapped[str] = so.mapped_column(
+        sa.ForeignKey("applications.id")
     )
     session_id: so.Mapped[str] = so.mapped_column(
         sa.ForeignKey("device_sessions.id"), index=True
@@ -31,8 +31,8 @@ class AppUsagePeriod(Base):
         sa.DateTime(), nullable=True
     )
 
-    session_app_state: so.Mapped["SessionAppState"] = so.relationship(
-        "SessionAppState", back_populates="usage_periods"
+    application: so.Mapped["Application"] = so.relationship(
+        "Application", back_populates="usage_periods"
     )
     session: so.Mapped["DeviceSession"] = so.relationship(
         "DeviceSession", back_populates="usage_periods"

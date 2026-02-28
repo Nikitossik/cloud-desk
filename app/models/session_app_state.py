@@ -30,11 +30,6 @@ class SessionAppState(Base):
     application: so.Mapped["Application"] = so.relationship(
         "Application", back_populates="session_app_states"
     )
-    usage_periods: so.Mapped[list["AppUsagePeriod"]] = so.relationship(
-        "AppUsagePeriod",
-        back_populates="session_app_state",
-        cascade="all, delete-orphan",
-    )
     
     __table_args__ = (
         sa.UniqueConstraint("session_id", "application_id", name="uq_session_application"),

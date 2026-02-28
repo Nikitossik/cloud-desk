@@ -41,17 +41,13 @@ class DeviceSessionIn(DeviceSessionBase):
 class Application(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     name: str
-class SessionApplication(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-    is_active: bool
-    application: Application
     
 class UsagePeriod(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     started_at: datetime.datetime
     ended_at: datetime.datetime
     duration: datetime.timedelta
-    session_app_state: SessionApplication
+    application: Application
         
 class DeviceSessionOut(DeviceSessionBase):
     is_active: bool = Field(
