@@ -20,7 +20,7 @@ function shouldSkipAuthRefresh(config) {
   return Boolean(config?.skipAuthRefresh)
 }
 
-function refreshSingleFlight() {
+function refreshSingleFlight(onAccessTokenRefreshed) {
   if (refreshPromise) {
     return refreshPromise
   }
@@ -33,6 +33,7 @@ function refreshSingleFlight() {
   refreshPromise = refreshRequest(refreshToken)
     .then((pair) => {
       setTokenPair(pair)
+      onAccessTokenRefreshed?.(pair.access_token)
       return pair.access_token
     })
     .finally(() => {
@@ -42,7 +43,7 @@ function refreshSingleFlight() {
   return refreshPromise
 }
 
-export function setupAuthInterceptors({ onAuthFailed }) {
+export function setupAuthInterceptors({ onAuthFailed, onAccessTokenRefreshed }) {
   if (requestInterceptorId !== null) {
     http.interceptors.request.eject(requestInterceptorId)
     requestInterceptorId = null
@@ -65,7 +66,7 @@ export function setupAuthInterceptors({ onAuthFailed }) {
 
     if (isExpired(accessToken, 5_000)) {
       try {
-        accessToken = await refreshSingleFlight()
+        accessToken = await refreshSingleFlight(onAccessTokenRefreshed)
       } catch (error) {
         clearTokens()
         onAuthFailed?.()
@@ -98,7 +99,7 @@ export function setupAuthInterceptors({ onAuthFailed }) {
       originalRequest._retry = true
 
       try {
-        const newAccessToken = await refreshSingleFlight()
+        const newAccessToken = await refreshSingleFlight(onAccessTokenRefreshed)
         originalRequest.headers = originalRequest.headers ?? {}
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
         return http(originalRequest)

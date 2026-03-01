@@ -1,5 +1,5 @@
-import { createContext, useEffect, useMemo, useRef, useState } from "react"
-import { loginRequest, signupRequest } from "@/features/auth/api/auth-api"
+import { createContext, useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { loginRequest, meRequest, signupRequest } from "@/features/auth/api/auth-api"
 import { setupAuthInterceptors } from "@/features/auth/api/auth-http"
 import {
   clearTokens,
@@ -13,6 +13,8 @@ export const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(getAccessToken())
+  const [userProfile, setUserProfile] = useState(null)
+  const [isProfileLoading, setIsProfileLoading] = useState(false)
   const [isBootstrapped, setIsBootstrapped] = useState(false)
   const refreshExpiryTimerRef = useRef(null)
 
@@ -26,29 +28,52 @@ export function AuthProvider({ children }) {
     }
   }
 
-  const saveTokenPair = (accessToken, refreshToken) => {
+  const saveTokenPair = useCallback((accessToken, refreshToken) => {
     setTokenPair({
       access_token: accessToken,
       refresh_token: refreshToken,
     })
     setToken(accessToken)
-  }
+  }, [])
 
-  const logout = () => {
+  const logout = useCallback(() => {
     clearTokens()
     setToken(null)
-  }
+    setUserProfile(null)
+    setIsProfileLoading(false)
+  }, [])
 
-  const login = async (email, password) => {
+  const login = useCallback(async (email, password) => {
     const data = await loginRequest(email, password)
     saveTokenPair(data.access_token, data.refresh_token)
     return data
-  }
+  }, [saveTokenPair])
 
-  const signup = async ({ name, surname, email, password }) => {
+  const signup = useCallback(async ({ name, surname, email, password }) => {
     await signupRequest({ name, surname, email, password })
     return login(email, password)
-  }
+  }, [login])
+
+  const refreshUserProfile = useCallback(async () => {
+    if (!token) {
+      setUserProfile(null)
+      setIsProfileLoading(false)
+      return null
+    }
+
+    setIsProfileLoading(true)
+
+    try {
+      const data = await meRequest(token)
+      setUserProfile(data)
+      return data
+    } catch (error) {
+      setUserProfile(null)
+      throw error
+    } finally {
+      setIsProfileLoading(false)
+    }
+  }, [token])
 
   useEffect(() => {
     const savedRefreshToken = getRefreshToken()
@@ -65,12 +90,15 @@ export function AuthProvider({ children }) {
     }
 
     setIsBootstrapped(true)
-  }, [])
+  }, [logout])
 
   useEffect(() => {
-    const teardown = setupAuthInterceptors({ onAuthFailed: logout })
+    const teardown = setupAuthInterceptors({
+      onAuthFailed: logout,
+      onAccessTokenRefreshed: (nextToken) => setToken(nextToken),
+    })
     return teardown
-  }, [token])
+  }, [logout])
 
   useEffect(() => {
     if (refreshExpiryTimerRef.current) {
@@ -105,21 +133,52 @@ export function AuthProvider({ children }) {
         refreshExpiryTimerRef.current = null
       }
     }
-  }, [token])
+  }, [token, logout])
+
+  useEffect(() => {
+    if (!token) {
+      setUserProfile(null)
+      setIsProfileLoading(false)
+      return
+    }
+
+    const loadProfile = async () => {
+      try {
+        await refreshUserProfile()
+      } catch {
+        return
+      }
+    }
+
+    loadProfile()
+  }, [token, refreshUserProfile])
 
   const user = useMemo(() => readUserFromToken(token), [token])
 
   const value = useMemo(
     () => ({
       user,
+      userProfile,
+      isProfileLoading,
       token,
       isBootstrapped,
       isAuthenticated: Boolean(token),
       login,
       signup,
+      refreshUserProfile,
       logout,
     }),
-    [user, token, isBootstrapped]
+    [
+      user,
+      userProfile,
+      isProfileLoading,
+      token,
+      isBootstrapped,
+      login,
+      signup,
+      refreshUserProfile,
+      logout,
+    ]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

@@ -2,7 +2,6 @@ import {
   ChevronsUpDown,
   LogOut,
 } from "lucide-react"
-import { useQuery } from "react-query"
 
 import {
   Avatar,
@@ -24,32 +23,18 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { useAuth } from "@/features/auth/hooks/use-auth"
-import { http } from "@/shared/api/http-client"
 
 export function NavUser() {
   const { isMobile } = useSidebar()
-  const { token, logout } = useAuth()
+  const { userProfile, isProfileLoading, logout } = useAuth()
 
-  const { data } = useQuery(
-    ["auth", "me", token],
-    async () => {
-      const response = await http.get("/auth/me", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      return response.data
-    },
-    {
-      enabled: Boolean(token),
-      staleTime: 60_000,
-      retry: 1,
-    }
-  )
-
-  const fullName = data ? `${data.name} ${data.surname}` : "Loading..."
-  const email = data?.email ?? ""
-  const initials = data?.name?.[0]?.toUpperCase() ?? "U"
+  const fullName = userProfile
+    ? `${userProfile.name} ${userProfile.surname}`
+    : isProfileLoading
+      ? "Loading..."
+      : "User"
+  const email = userProfile?.email ?? ""
+  const initials = userProfile?.name?.[0]?.toUpperCase() ?? "U"
 
   return (
     <SidebarMenu>
