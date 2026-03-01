@@ -1,6 +1,8 @@
+import { useState } from "react"
 import {
   ChevronsUpDown,
   LogOut,
+  Pencil,
 } from "lucide-react"
 
 import {
@@ -23,8 +25,10 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { useAuth } from "@/features/auth/hooks/use-auth"
+import { EditProfileDialog } from "@/features/auth/components/edit-profile-dialog"
 
 export function NavUser() {
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false)
   const { isMobile } = useSidebar()
   const { userProfile, isProfileLoading, logout } = useAuth()
 
@@ -73,12 +77,25 @@ export function NavUser() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onSelect={(event) => {
+                event.preventDefault()
+                setIsEditProfileOpen(true)
+              }}
+            >
+              <Pencil />
+              Edit profile
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={logout}>
               <LogOut />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        <EditProfileDialog
+          open={isEditProfileOpen}
+          onOpenChange={setIsEditProfileOpen}
+        />
       </SidebarMenuItem>
     </SidebarMenu>
   );

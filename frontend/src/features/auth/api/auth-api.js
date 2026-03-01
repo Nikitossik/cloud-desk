@@ -40,11 +40,16 @@ export async function refreshRequest(refreshToken) {
 }
 
 export async function meRequest(accessToken) {
-  const { data } = await http.get("/auth/me", {
+  const { data } = await http.get("/user/me", {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
   })
 
+  return data
+}
+
+export async function updateMeRequest(payload) {
+  const { data } = await http.patch("/user/me", payload)
   return data
 }
