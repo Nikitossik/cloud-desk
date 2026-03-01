@@ -19,14 +19,6 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 
-const data = {
-  user: {
-    name: "Current User",
-    email: "user@clouddesk.local",
-    avatar: "",
-  }
-}
-
 export function AppSidebar({
   onAddSession,
   ...props
@@ -61,7 +53,7 @@ export function AppSidebar({
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-        <NavUser user={data.user} />
+        <NavUser />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

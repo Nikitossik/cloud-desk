@@ -38,7 +38,9 @@ export function SessionPage() {
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
       <div className="flex items-start justify-between gap-4">
-        <h1 className="text-3xl font-semibold tracking-tight">{session.name}</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">
+          {session.name}
+        </h1>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -49,20 +51,20 @@ export function SessionPage() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuItem>
-              <Pencil />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Copy />
-              Clone
-            </DropdownMenuItem>
-            <DropdownMenuItem>
               <Play />
               Activate
             </DropdownMenuItem>
             <DropdownMenuItem>
               <RotateCcw />
               Restore
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Pencil />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Copy />
+              Clone
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem variant="destructive">
@@ -88,5 +90,5 @@ export function SessionPage() {
         <h2 className="text-xl font-semibold">Applications</h2>
       </section>
     </div>
-  )
+  );
 }

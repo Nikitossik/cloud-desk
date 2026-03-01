@@ -12,15 +12,31 @@ import {
 } from "@/components/ui/sidebar"
 import { Navigate, Route, Routes, useLocation } from "react-router"
 import { useState } from "react"
+import { useAuth } from "@/features/auth/hooks/use-auth"
 import { SessionPage } from "@/pages/session/session-page"
 import { DevicePage } from "@/pages/device/device-page"
 import { StatisticsPage } from "@/pages/statistics/statistics-page"
 import { TrashPage } from "@/pages/trash/trash-page"
 import { AddSessionDialog } from "@/pages/session/components/add-session-dialog"
+import { AuthPage } from "@/features/auth/pages/auth-page"
 
 export default function App() {
   const { pathname } = useLocation()
   const [isAddSessionOpen, setIsAddSessionOpen] = useState(false)
+  const { isAuthenticated, isBootstrapped } = useAuth()
+
+  if (!isBootstrapped) {
+    return null
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <Routes>
+        <Route path="/login" element={<AuthPage />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    )
+  }
 
   let pageTitle = "Cloud Desk"
   if (pathname.startsWith("/session/")) pageTitle = "Session"
@@ -47,6 +63,7 @@ export default function App() {
           </div>
         </header>
         <Routes>
+          <Route path="/login" element={<Navigate to="/" replace />} />
           <Route path="/" element={<Navigate to="/device/current-device" replace />} />
           <Route path="/session/:session_slug" element={<SessionPage />} />
           <Route path="/device/:device_id" element={<DevicePage />} />
