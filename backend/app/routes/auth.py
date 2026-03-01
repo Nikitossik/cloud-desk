@@ -50,13 +50,3 @@ def refresh_access_token(
     return AuthService(db).refresh_access_token(refresh_token)
 
 
-@auth_route.get(
-    "/me",
-    description=(DOCS_PATH / "get_me.md").read_text(),
-    summary="Retrieves the currently authenticated user's profile.",
-    response_model=UserOut,
-)
-async def read_users_me(
-    current_user: Annotated[User, Depends(get_current_user)],
-):
-    return current_user

@@ -35,6 +35,7 @@ app.add_middleware(
 
 Base.metadata.create_all(bind=engine)
 app.include_router(r.auth_route)
+app.include_router(r.user_route)
 app.include_router(r.device_route)
 app.include_router(r.active_session_route)
 app.include_router(r.session_route)
