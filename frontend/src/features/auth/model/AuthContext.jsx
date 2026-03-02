@@ -1,13 +1,12 @@
-import { createContext, useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { loginRequest, meRequest, signupRequest } from "@/features/auth/api/auth-api"
+import { createContext, useCallback, useEffect, useMemo, useState } from "react"
+import { loginRequest, meRequest, refreshRequest, signupRequest } from "@/features/auth/api/auth-api"
 import { setupAuthInterceptors } from "@/features/auth/api/auth-http"
 import {
   clearTokens,
   getAccessToken,
-  getRefreshToken,
-  setTokenPair,
+  setAccessToken,
 } from "@/features/auth/lib/token-storage"
-import { getExpMs, parseJwtPayload, isExpired } from "@/features/auth/lib/jwt"
+import { parseJwtPayload, isExpired } from "@/features/auth/lib/jwt"
 
 export const AuthContext = createContext(null)
 
@@ -16,7 +15,6 @@ export function AuthProvider({ children }) {
   const [userProfile, setUserProfile] = useState(null)
   const [isProfileLoading, setIsProfileLoading] = useState(false)
   const [isBootstrapped, setIsBootstrapped] = useState(false)
-  const refreshExpiryTimerRef = useRef(null)
 
   const readUserFromToken = (accessToken) => {
     const payload = parseJwtPayload(accessToken)
@@ -28,15 +26,12 @@ export function AuthProvider({ children }) {
     }
   }
 
-  const saveTokenPair = useCallback((accessToken, refreshToken) => {
-    setTokenPair({
-      access_token: accessToken,
-      refresh_token: refreshToken,
-    })
+  const saveAccessToken = useCallback((accessToken) => {
+    setAccessToken(accessToken)
     setToken(accessToken)
   }, [])
 
-  const logout = useCallback(() => {
+  const logout = useCallback((reason = "manual") => {
     clearTokens()
     setToken(null)
     setUserProfile(null)
@@ -45,9 +40,9 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(async (email, password) => {
     const data = await loginRequest(email, password)
-    saveTokenPair(data.access_token, data.refresh_token)
+    saveAccessToken(data.access_token)
     return data
-  }, [saveTokenPair])
+  }, [saveAccessToken])
 
   const signup = useCallback(async ({ name, surname, email, password }) => {
     await signupRequest({ name, surname, email, password })
@@ -64,33 +59,46 @@ export function AuthProvider({ children }) {
     setIsProfileLoading(true)
 
     try {
-      const data = await meRequest(token)
+      const data = await meRequest()
       setUserProfile(data)
       return data
     } catch (error) {
       setUserProfile(null)
+      const status = error?.response?.status
+      const detail = error?.response?.data?.detail || error?.message || "unknown"
+
+      if (status === 401) {
+        logout("profile_unauthorized_401")
+      }
+
       throw error
     } finally {
       setIsProfileLoading(false)
     }
-  }, [token])
+  }, [token, logout])
 
   useEffect(() => {
-    const savedRefreshToken = getRefreshToken()
+    const bootstrapAuth = async () => {
+      const savedAccessToken = getAccessToken()
 
-    if (!savedRefreshToken || isExpired(savedRefreshToken, 5_000)) {
-      logout()
-      setIsBootstrapped(true)
-      return
+      if (savedAccessToken && !isExpired(savedAccessToken, 5_000)) {
+        setToken(savedAccessToken)
+        setIsBootstrapped(true)
+        return
+      }
+
+      try {
+        const data = await refreshRequest()
+        saveAccessToken(data.access_token)
+      } catch {
+        logout("bootstrap_refresh_failed")
+      } finally {
+        setIsBootstrapped(true)
+      }
     }
 
-    const savedAccessToken = getAccessToken()
-    if (savedAccessToken) {
-      setToken(savedAccessToken)
-    }
-
-    setIsBootstrapped(true)
-  }, [logout])
+    bootstrapAuth()
+  }, [logout, saveAccessToken])
 
   useEffect(() => {
     const teardown = setupAuthInterceptors({
@@ -99,41 +107,6 @@ export function AuthProvider({ children }) {
     })
     return teardown
   }, [logout])
-
-  useEffect(() => {
-    if (refreshExpiryTimerRef.current) {
-      clearTimeout(refreshExpiryTimerRef.current)
-      refreshExpiryTimerRef.current = null
-    }
-
-    const refreshToken = getRefreshToken()
-    if (!refreshToken) {
-      return
-    }
-
-    const expMs = getExpMs(refreshToken)
-    if (!expMs) {
-      logout()
-      return
-    }
-
-    const delay = expMs - Date.now()
-    if (delay <= 0) {
-      logout()
-      return
-    }
-
-    refreshExpiryTimerRef.current = setTimeout(() => {
-      logout()
-    }, delay)
-
-    return () => {
-      if (refreshExpiryTimerRef.current) {
-        clearTimeout(refreshExpiryTimerRef.current)
-        refreshExpiryTimerRef.current = null
-      }
-    }
-  }, [token, logout])
 
   useEffect(() => {
     if (!token) {

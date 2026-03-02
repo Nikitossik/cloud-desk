@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends, Header, Response, Cookie, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from typing import Annotated
 from ..models import User
@@ -32,8 +32,17 @@ def login_for_token_pair(
     *,
     db: Annotated[Session, Depends(get_db)],
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    response: Response
 ):
-    return AuthService(db).create_token_pair(form_data.username, form_data.password)
+    token_pair = AuthService(db).create_token_pair(form_data.username, form_data.password)
+    
+    response.set_cookie(key="refresh_token", 
+        value=token_pair["refresh_token"], 
+        httponly=True, 
+        samesite="lax",
+        secure=False,
+        path="/auth")
+    return token_pair
 
 
 @auth_route.post(
@@ -45,8 +54,12 @@ def login_for_token_pair(
 def refresh_access_token(
     *,
     db: Annotated[Session, Depends(get_db)],
-    refresh_token: Annotated[str, Header(alias="X-Refresh-Token")],
+    refresh_token: Annotated[str | None, Cookie()],
 ):
+    
+    if not refresh_token:
+        raise HTTPException(status_code=401, detail="Refresh token is missing")
+    
     return AuthService(db).refresh_access_token(refresh_token)
 
 

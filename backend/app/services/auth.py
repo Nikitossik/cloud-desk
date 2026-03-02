@@ -63,11 +63,10 @@ class AuthService:
             )
 
             token_data = TokenPayload(**payload)
-            new_access_token = us.create_access_token({"sub": token_data.sub})
+            new_access_token = us.create_access_token({"sub": str(token_data.sub)})
 
             return {
                 "access_token": new_access_token,
-                "refresh_token": refresh_token,
                 "token_type": "bearer",
             }
         except jwt.exceptions.ExpiredSignatureError:

@@ -3,8 +3,7 @@ import { refreshRequest } from "@/features/auth/api/auth-api"
 import {
   clearTokens,
   getAccessToken,
-  getRefreshToken,
-  setTokenPair,
+  setAccessToken,
 } from "@/features/auth/lib/token-storage"
 import { isExpired } from "@/features/auth/lib/jwt"
 
@@ -25,16 +24,11 @@ function refreshSingleFlight(onAccessTokenRefreshed) {
     return refreshPromise
   }
 
-  const refreshToken = getRefreshToken()
-  if (!refreshToken || isExpired(refreshToken, 5_000)) {
-    return Promise.reject(new Error("Refresh token is missing or expired"))
-  }
-
-  refreshPromise = refreshRequest(refreshToken)
-    .then((pair) => {
-      setTokenPair(pair)
-      onAccessTokenRefreshed?.(pair.access_token)
-      return pair.access_token
+  refreshPromise = refreshRequest()
+    .then((data) => {
+      setAccessToken(data.access_token)
+      onAccessTokenRefreshed?.(data.access_token)
+      return data.access_token
     })
     .finally(() => {
       refreshPromise = null
@@ -69,7 +63,7 @@ export function setupAuthInterceptors({ onAuthFailed, onAccessTokenRefreshed }) 
         accessToken = await refreshSingleFlight(onAccessTokenRefreshed)
       } catch (error) {
         clearTokens()
-        onAuthFailed?.()
+        onAuthFailed?.("refresh_failed")
         throw error
       }
     }
@@ -105,7 +99,7 @@ export function setupAuthInterceptors({ onAuthFailed, onAccessTokenRefreshed }) 
         return http(originalRequest)
       } catch (refreshError) {
         clearTokens()
-        onAuthFailed?.()
+        onAuthFailed?.("refresh_failed_after_401")
         return Promise.reject(refreshError)
       }
     }

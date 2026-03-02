@@ -4,9 +4,6 @@ class Token(BaseModel):
     access_token: str = Field(
         description="Access token used to authenticate API requests."
     )
-    refresh_token: str = Field(
-        description="Refresh token used to obtain a new access token."
-    )
     token_type: str = Field(description="Type of the token. Usually 'bearer'.")
 
 

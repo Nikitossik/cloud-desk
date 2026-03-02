@@ -23,28 +23,21 @@ export async function signupRequest({ name, surname, email, password }) {
   return data
 }
 
-export async function refreshRequest(refreshToken) {
+export async function refreshRequest() {
   const { data } = await http.post(
     "/auth/refresh",
     {},
     {
       skipAuthAttach: true,
       skipAuthRefresh: true,
-      headers: {
-        "X-Refresh-Token": refreshToken,
-      },
     }
   )
 
   return data
 }
 
-export async function meRequest(accessToken) {
-  const { data } = await http.get("/user/me", {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  })
+export async function meRequest() {
+  const { data } = await http.get("/user/me")
 
   return data
 }

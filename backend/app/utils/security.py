@@ -33,11 +33,11 @@ def create_access_token(
 
 
 def create_refresh_token(
-    data: dict, expiry_minutes: int = int(setting.REFRESH_TOKEN_EXPIRE_MINUTES)
+    data: dict, expiry_days: int = int(setting.REFRESH_TOKEN_EXPIRE_DAYS)
 ):
     data_to_encode = data.copy()
 
-    expiration_datetime = datetime.now(timezone.utc) + timedelta(minutes=expiry_minutes)
+    expiration_datetime = datetime.now(timezone.utc) + timedelta(days=expiry_days)
 
     data_to_encode.update({"exp": expiration_datetime})
     return jwt.encode(
