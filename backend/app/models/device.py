@@ -27,6 +27,8 @@ class Device(Base):
     os_release: so.Mapped[str]
     os_release_ver: so.Mapped[str]
     architecture: so.Mapped[str]
+    created_at = so.mapped_column(sa.DateTime(), server_default=sa.func.now())
+    last_seen_at = so.mapped_column(sa.DateTime(), nullable=True)
 
     user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("users.id"))
     

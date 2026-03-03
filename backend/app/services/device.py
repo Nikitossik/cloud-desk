@@ -4,8 +4,8 @@ import app.utils.core as uc
 from ..models import Device, Application
 from ..schemas.device import DeviceUpdate
 from typing import Any
-import uuid
 from datetime import datetime
+from fastapi import HTTPException, status
 
 class DeviceService:
     def __init__(self, db: Session):
@@ -19,10 +19,54 @@ class DeviceService:
             device_data = uc.get_device_data()
             device_data["user_id"] = user_id
             device_data['fingerprint'] = device_fingerprint
+            device_data['last_seen_at'] = datetime.utcnow()
             new_device = self.device_repo.create(device_data)
             return new_device
-        
+        self.device_repo.update(device, {"last_seen_at": datetime.utcnow()})
         return device
+
+    def bind_device_fingerprint(self, user_id: int, target_device_id: str, new_fingerprint: str) -> Device:
+        target_device = self.device_repo.get(target_device_id)
+
+        if not target_device or target_device.user_id != user_id:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Device not found")
+
+        found_with_fingerprint = self.device_repo.get_by_user_and_fingerprint(user_id, new_fingerprint)
+
+        if found_with_fingerprint and found_with_fingerprint.id != target_device.id:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Fingerprint is already bound to another device",
+            )
+
+        return self.device_repo.update(
+            target_device,
+            {
+                "fingerprint": new_fingerprint,
+                "last_seen_at": datetime.utcnow(),
+            },
+        )
+
+    def create_device_with_fingerprint(
+        self,
+        user_id: int,
+        new_fingerprint: str,
+        display_name: str | None = None,
+    ) -> Device:
+        found_with_fingerprint = self.device_repo.get_by_user_and_fingerprint(user_id, new_fingerprint)
+
+        if found_with_fingerprint:
+            return self.device_repo.update(
+                found_with_fingerprint,
+                {"last_seen_at": datetime.utcnow()},
+            )
+
+        device_data = uc.get_device_data()
+        device_data["user_id"] = user_id
+        device_data["fingerprint"] = new_fingerprint
+        device_data["display_name"] = display_name
+        device_data["last_seen_at"] = datetime.utcnow()
+        return self.device_repo.create(device_data)
     
     def update_current_device(self, device: Device, device_update: DeviceUpdate) -> Device:
         update_data = device_update.model_dump(exclude_unset=True)

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from .database import get_db
 from typing import Annotated
 import jwt
-from ..schemas.user import TokenPayload
+from ..schemas.token import TokenPayload
 from ..repositories import UserRepository
 from ..config import setting
 from pydantic import ValidationError

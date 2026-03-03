@@ -1,10 +1,15 @@
 from fastapi import APIRouter, Depends, Header, Response, Cookie, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from typing import Annotated
-from ..models import User
-from ..dependencies import get_db, get_current_user
+from ..dependencies import get_db, get_resolution_user_id
 from sqlalchemy.orm import Session
-from ..schemas.user import Token, UserIn, UserOut
+from ..schemas.user import UserIn, UserOut
+from ..schemas.token import Token
+from ..schemas.device import DeviceOut
+from ..schemas.device_resolution import (
+    ResolveDeviceRebindIn,
+    ResolveDeviceCreateIn,
+)
 from ..services import AuthService
 from pathlib import Path
 
@@ -32,9 +37,25 @@ def login_for_token_pair(
     *,
     db: Annotated[Session, Depends(get_db)],
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    response: Response
+    response: Response,
+    x_device_fingerprint: Annotated[str | None, Header(alias="X-Device-Fingerprint")] = None,
 ):
-    token_pair = AuthService(db).create_token_pair(form_data.username, form_data.password)
+    result = AuthService(db).login_with_device_resolution(
+        form_data.username,
+        form_data.password,
+        x_device_fingerprint,
+    )
+
+    if result["status"] != "ok":
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "device_resolution_required",
+                "resolution_token": result["resolution_token"],
+            },
+        )
+
+    token_pair = result["token"]
     
     response.set_cookie(key="refresh_token", 
         value=token_pair["refresh_token"], 
@@ -61,5 +82,78 @@ def refresh_access_token(
         raise HTTPException(status_code=401, detail="Refresh token is missing")
     
     return AuthService(db).refresh_access_token(refresh_token)
+
+
+@auth_route.post(
+    "/device/resolve/devices",
+    summary="Returns user's devices for device-resolution flow.",
+    response_model=list[DeviceOut],
+)
+def get_devices_for_resolution(
+    *,
+    db: Annotated[Session, Depends(get_db)],
+    resolution_user_id: Annotated[int, Depends(get_resolution_user_id)],
+):
+    return AuthService(db).get_devices_for_resolution(resolution_user_id)
+
+
+@auth_route.post(
+    "/device/resolve/rebind",
+    summary="Binds selected existing device to new fingerprint and returns auth tokens.",
+    response_model=Token,
+)
+def resolve_device_rebind(
+    *,
+    db: Annotated[Session, Depends(get_db)],
+    resolution_user_id: Annotated[int, Depends(get_resolution_user_id)],
+    body: ResolveDeviceRebindIn,
+    response: Response,
+):
+    token_pair = AuthService(db).resolve_device_rebind(
+        user_id=resolution_user_id,
+        target_device_id=str(body.target_device_id),
+        new_fingerprint=body.new_fingerprint,
+    )
+
+    response.set_cookie(
+        key="refresh_token",
+        value=token_pair["refresh_token"],
+        httponly=True,
+        samesite="lax",
+        secure=False,
+        path="/auth",
+    )
+
+    return token_pair
+
+
+@auth_route.post(
+    "/device/resolve/create",
+    summary="Creates/binds new device fingerprint and returns auth tokens.",
+    response_model=Token,
+)
+def resolve_device_create(
+    *,
+    db: Annotated[Session, Depends(get_db)],
+    resolution_user_id: Annotated[int, Depends(get_resolution_user_id)],
+    body: ResolveDeviceCreateIn,
+    response: Response,
+):
+    token_pair = AuthService(db).resolve_device_create(
+        user_id=resolution_user_id,
+        new_fingerprint=body.new_fingerprint,
+        display_name=body.display_name,
+    )
+
+    response.set_cookie(
+        key="refresh_token",
+        value=token_pair["refresh_token"],
+        httponly=True,
+        samesite="lax",
+        secure=False,
+        path="/auth",
+    )
+
+    return token_pair
 
 

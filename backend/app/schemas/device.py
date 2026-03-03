@@ -15,6 +15,7 @@ class DeviceBase(BaseModel):
                     "os_release": "10",
                     "os_release_ver": "10.0.19045",
                     "architecture": "AMD64",
+                    "created_at": "2024-04-26T12:34:56.789Z",
                 }
             ]
         },
@@ -44,6 +45,12 @@ class DeviceBase(BaseModel):
     )
     architecture: str = Field(
         description="The system architecture (e.g., AMD64, x86_64)."
+    )
+    created_at: datetime = Field(
+        description="The timestamp when the device was registered."
+    )
+    last_seen_at: datetime | None = Field(
+        description="The timestamp when the device was last seen. Can be null if the device has never been seen after registration."
     )
 
 class DeviceOut(DeviceBase):
