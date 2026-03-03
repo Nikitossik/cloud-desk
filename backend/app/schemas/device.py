@@ -15,13 +15,20 @@ class DeviceBase(BaseModel):
                     "os_release": "10",
                     "os_release_ver": "10.0.19045",
                     "architecture": "AMD64",
-                    "created_at": "2024-04-26T12:34:56.789Z",
                 }
             ]
         },
     )
 
     id: UUID = Field(description="Unique identifier for the device.")
+    fingerprint: str = Field(
+        description="A unique fingerprint for the device, used to identify it across sessions."
+    )
+    display_name: str | None = Field(
+        None,
+        max_length=60,
+        description="A user-friendly name for the device. Must be a string of maximum 60 characters. Can be null to remove the display name.",
+    )
     mac_address: str = Field(
         max_length=17,
         description="The MAC address of the device. Must be a string of maximum 17 characters.",
@@ -38,6 +45,13 @@ class DeviceBase(BaseModel):
     architecture: str = Field(
         description="The system architecture (e.g., AMD64, x86_64)."
     )
-    created_at: datetime = Field(
-        description="The timestamp when the device was registered."
+
+class DeviceOut(DeviceBase):
+    pass
+    
+class DeviceUpdate(BaseModel):
+    display_name: str | None = Field(
+        None,
+        max_length=60,
+        description="A user-friendly name for the device. Must be a string of maximum 60 characters. Can be null to remove the display name.",
     )

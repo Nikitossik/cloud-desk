@@ -96,8 +96,7 @@ def deactivate_active_session(
     *,
     db: Annotated[so.Session, Depends(d.get_db)],
     device: Annotated[md.Device, Depends(d.get_current_device)],
-    active_session: Annotated[md.DeviceSession, Depends(d.get_active_session)],
-    save_usage: Annotated[bool, Query()] = True,
+    active_session: Annotated[md.DeviceSession, Depends(d.get_active_session)]
 ):
     DeviceService(db).sync_applications(device)
     return DeviceSessionService(db).deactivate_session(active_session, save_usage)

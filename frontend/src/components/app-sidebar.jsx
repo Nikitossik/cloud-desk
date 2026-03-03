@@ -6,7 +6,7 @@ import {
 } from "lucide-react"
 import { NavLink } from "react-router"
 
-import { NavMain } from "@/components/nav-main"
+import { NavMain } from "@/components/navbar/nav-main"
 import { NavUser } from "@/components/nav-user"
 import {
   Sidebar,

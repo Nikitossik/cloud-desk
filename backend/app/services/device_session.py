@@ -72,7 +72,7 @@ class DeviceSessionService:
             self.deactivate_session(last_active_session)
 
     def deactivate_session(
-        self, session: DeviceSession, save_usage: bool = True
+        self, session: DeviceSession
     ) -> DeviceSession:
         saved_session = self.save_session_state(session)
 

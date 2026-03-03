@@ -3,61 +3,108 @@ import { Navigate, useNavigate } from "react-router"
 import { useMutation } from "react-query"
 
 import { useAuth } from "@/features/auth/hooks/use-auth"
+import { ensureDeviceFingerprint } from "@/features/device/lib/fingerprint"
+import { useResolveDeviceAfterAuth } from "@/features/device/hooks/use-resolve-device-after-auth"
+import { useUpdateCurrentDeviceMutation } from "@/features/device/hooks/use-update-current-device-mutation"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
+import { AuthCredentialsForm } from "@/features/auth/components/auth-credentials-form"
+import { DetectedDeviceDialog } from "@/features/auth/components/detected-device-dialog"
 
 export function AuthPage() {
   const navigate = useNavigate()
-  const { isAuthenticated, login, signup } = useAuth()
+  const { isAuthenticated, login, signup, logout } = useAuth()
+  const resolveDeviceAfterAuth = useResolveDeviceAfterAuth()
 
   const [mode, setMode] = useState("login")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [name, setName] = useState("")
-  const [surname, setSurname] = useState("")
+  const [deviceName, setDeviceName] = useState("")
+  const [deviceStepError, setDeviceStepError] = useState("")
+  const [authErrorMessage, setAuthErrorMessage] = useState("")
+  const [isDeviceModalOpen, setIsDeviceModalOpen] = useState(false)
+  const [detectedDevice, setDetectedDevice] = useState(null)
+  const [allowAutoRedirect, setAllowAutoRedirect] = useState(true)
 
-  const loginMutation = useMutation(async () => login(email, password), {
-    onSuccess: () => {
-      navigate("/device/current-device", { replace: true })
-    },
-  })
-
-  const signupMutation = useMutation(
-    async () =>
-      signup({
-        name,
-        surname,
-        email,
-        password,
-      }),
-    {
-      onSuccess: () => {
-        navigate("/device/current-device", { replace: true })
-      },
-    }
-  )
-
-  if (isAuthenticated) {
-    return <Navigate to="/device/current-device" replace />
-  }
-
-  const isLoading = loginMutation.isLoading || signupMutation.isLoading
-  const errorMessage =
-    loginMutation.error?.response?.data?.detail ||
-    signupMutation.error?.response?.data?.detail ||
-    loginMutation.error?.message ||
-    signupMutation.error?.message
-
-  const handleSubmit = (event) => {
-    event.preventDefault()
+  const authMutation = useMutation(async (values) => {
+    setAuthErrorMessage("")
+    setDeviceStepError("")
 
     if (mode === "login") {
-      loginMutation.mutate()
+      await login(values.email, values.password)
+      const result = await resolveDeviceAfterAuth()
+
+      if (result.wasKnown) {
+        navigate("/", { replace: true })
+        return
+      }
+
+      logout("login_device_not_found")
+      setAuthErrorMessage("Device not found for this fingerprint. Bind/create flow will be added next.")
       return
     }
 
-    signupMutation.mutate()
+    await signup({
+      name: values.name,
+      surname: values.surname,
+      email: values.email,
+      password: values.password,
+    })
+
+    ensureDeviceFingerprint()
+
+    const result = await resolveDeviceAfterAuth()
+    setDetectedDevice(result.currentDevice)
+    setDeviceName(result.currentDevice?.display_name || "")
+    setIsDeviceModalOpen(true)
+    setAllowAutoRedirect(false)
+  })
+
+  const deviceMutation = useUpdateCurrentDeviceMutation({
+    onSuccess: () => {
+      setIsDeviceModalOpen(false)
+      setAllowAutoRedirect(true)
+      navigate("/", { replace: true })
+    },
+    onError: (error) => {
+      const message =
+        error?.response?.data?.detail ||
+        error?.message ||
+        "Failed to save device name"
+      setDeviceStepError(String(message))
+    },
+  })
+
+  if (isAuthenticated && allowAutoRedirect && !isDeviceModalOpen) {
+    return <Navigate to="/" replace />
+  }
+
+  const isLoading = authMutation.isLoading || deviceMutation.isLoading
+  const errorMessage =
+    authErrorMessage ||
+    authMutation.error?.response?.data?.detail ||
+    authMutation.error?.message
+
+  const handleAuthSubmit = (values) => {
+    if (mode === "signup") {
+      setAllowAutoRedirect(false)
+    } else {
+      setAllowAutoRedirect(true)
+    }
+    authMutation.mutate(values)
+  }
+
+  const handleDeviceSubmit = (nextDeviceName) => {
+    setDeviceStepError("")
+    setDeviceName(nextDeviceName)
+    deviceMutation.mutate(nextDeviceName)
+  }
+
+  const switchMode = (nextMode) => {
+    setMode(nextMode)
+    setDeviceStepError("")
+    setAuthErrorMessage("")
+    setDeviceName("")
+    setDetectedDevice(null)
+    setIsDeviceModalOpen(false)
+    setAllowAutoRedirect(true)
   }
 
   return (
@@ -74,7 +121,7 @@ export function AuthPage() {
           <Button
             type="button"
             variant={mode === "login" ? "default" : "outline"}
-            onClick={() => setMode("login")}
+            onClick={() => switchMode("login")}
             disabled={isLoading}
           >
             Login
@@ -82,68 +129,28 @@ export function AuthPage() {
           <Button
             type="button"
             variant={mode === "signup" ? "default" : "outline"}
-            onClick={() => setMode("signup")}
+            onClick={() => switchMode("signup")}
             disabled={isLoading}
           >
             Sign up
           </Button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {mode === "signup" && (
-            <>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Name</label>
-                <Input
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  placeholder="John"
-                />
-              </div>
+        <AuthCredentialsForm
+          mode={mode}
+          isLoading={isLoading}
+          errorMessage={errorMessage}
+          onSubmitValues={handleAuthSubmit}
+        />
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Surname</label>
-                <Input
-                  value={surname}
-                  onChange={(event) => setSurname(event.target.value)}
-                  placeholder="Doe"
-                />
-              </div>
-            </>
-          )}
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Email</label>
-            <Input
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="john@company.com"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Password</label>
-            <Input
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="••••••••"
-            />
-          </div>
-
-          {errorMessage && (
-            <Textarea
-              readOnly
-              className="min-h-0 resize-none text-sm"
-              value={String(errorMessage)}
-            />
-          )}
-
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Please wait..." : mode === "login" ? "Log in" : "Create account"}
-          </Button>
-        </form>
+        <DetectedDeviceDialog
+          open={isDeviceModalOpen}
+          detectedDevice={detectedDevice}
+          initialDeviceName={deviceName}
+          isLoading={deviceMutation.isLoading}
+          errorMessage={deviceStepError}
+          onSubmitDeviceName={handleDeviceSubmit}
+        />
       </div>
     </div>
   )

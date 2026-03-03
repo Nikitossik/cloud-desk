@@ -25,12 +25,14 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { useAuth } from "@/features/auth/hooks/use-auth"
-import { EditProfileDialog } from "@/features/auth/components/edit-profile-dialog"
+import { useUserProfileQuery } from "@/features/user/hooks/use-user-profile-query"
+import { EditProfileDialog } from "@/features/user/components/edit-profile-dialog"
 
 export function NavUser() {
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false)
   const { isMobile } = useSidebar()
-  const { userProfile, isProfileLoading, logout } = useAuth()
+  const { logout } = useAuth()
+  const { data: userProfile, isLoading: isProfileLoading } = useUserProfileQuery()
 
   const fullName = userProfile
     ? `${userProfile.name} ${userProfile.surname}`

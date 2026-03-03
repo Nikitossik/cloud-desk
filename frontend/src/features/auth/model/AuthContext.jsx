@@ -1,5 +1,5 @@
 import { createContext, useCallback, useEffect, useMemo, useState } from "react"
-import { loginRequest, meRequest, refreshRequest, signupRequest } from "@/features/auth/api/auth-api"
+import { loginRequest, refreshRequest, signupRequest } from "@/features/auth/api/auth-api"
 import { setupAuthInterceptors } from "@/features/auth/api/auth-http"
 import {
   clearTokens,
@@ -7,13 +7,12 @@ import {
   setAccessToken,
 } from "@/features/auth/lib/token-storage"
 import { parseJwtPayload, isExpired } from "@/features/auth/lib/jwt"
+import { queryClient } from "@/shared/lib/query-client"
 
 export const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(getAccessToken())
-  const [userProfile, setUserProfile] = useState(null)
-  const [isProfileLoading, setIsProfileLoading] = useState(false)
   const [isBootstrapped, setIsBootstrapped] = useState(false)
 
   const readUserFromToken = (accessToken) => {
@@ -32,10 +31,10 @@ export function AuthProvider({ children }) {
   }, [])
 
   const logout = useCallback((reason = "manual") => {
+    void reason
     clearTokens()
+    queryClient.clear()
     setToken(null)
-    setUserProfile(null)
-    setIsProfileLoading(false)
   }, [])
 
   const login = useCallback(async (email, password) => {
@@ -48,34 +47,6 @@ export function AuthProvider({ children }) {
     await signupRequest({ name, surname, email, password })
     return login(email, password)
   }, [login])
-
-  const refreshUserProfile = useCallback(async () => {
-    if (!token) {
-      setUserProfile(null)
-      setIsProfileLoading(false)
-      return null
-    }
-
-    setIsProfileLoading(true)
-
-    try {
-      const data = await meRequest()
-      setUserProfile(data)
-      return data
-    } catch (error) {
-      setUserProfile(null)
-      const status = error?.response?.status
-      const detail = error?.response?.data?.detail || error?.message || "unknown"
-
-      if (status === 401) {
-        logout("profile_unauthorized_401")
-      }
-
-      throw error
-    } finally {
-      setIsProfileLoading(false)
-    }
-  }, [token, logout])
 
   useEffect(() => {
     const bootstrapAuth = async () => {
@@ -108,48 +79,24 @@ export function AuthProvider({ children }) {
     return teardown
   }, [logout])
 
-  useEffect(() => {
-    if (!token) {
-      setUserProfile(null)
-      setIsProfileLoading(false)
-      return
-    }
-
-    const loadProfile = async () => {
-      try {
-        await refreshUserProfile()
-      } catch {
-        return
-      }
-    }
-
-    loadProfile()
-  }, [token, refreshUserProfile])
-
   const user = useMemo(() => readUserFromToken(token), [token])
 
   const value = useMemo(
     () => ({
       user,
-      userProfile,
-      isProfileLoading,
       token,
       isBootstrapped,
       isAuthenticated: Boolean(token),
       login,
       signup,
-      refreshUserProfile,
       logout,
     }),
     [
       user,
-      userProfile,
-      isProfileLoading,
       token,
       isBootstrapped,
       login,
       signup,
-      refreshUserProfile,
       logout,
     ]
   )

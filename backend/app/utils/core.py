@@ -1,6 +1,4 @@
 import re
-import uuid
-import platform
 import psutil as ps
 import pywinctl as pwc
 import pythoncom
@@ -12,6 +10,21 @@ from datetime import datetime
 import threading
 from typing import Callable
 import shlex
+import platform
+import re
+import uuid
+
+def get_mac_address() -> str:
+    return ":".join(re.findall("..", "%012x" % uuid.getnode()))
+
+def get_device_data() -> dict[str, Any]:
+    device_info = dict()
+    device_info["mac_address"] = get_mac_address()
+    device_info["os_name"] = platform.system()
+    device_info["os_release"] = platform.release()
+    device_info["os_release_ver"] = platform.version()
+    device_info["architecture"] = platform.machine()
+    return device_info
 
 def run_in_com(func: Callable) -> Callable:
     @wraps(func)
@@ -23,21 +36,6 @@ def run_in_com(func: Callable) -> Callable:
             pythoncom.CoUninitialize()
 
     return wrapper
-
-
-def get_mac_address() -> str:
-    return ":".join(re.findall("..", "%012x" % uuid.getnode()))
-
-
-def get_device_data() -> dict[str, Any]:
-    device_info = dict()
-    device_info["mac-address"] = get_mac_address()
-    device_info["os_name"] = platform.system()
-    device_info["os_release"] = platform.release()
-    device_info["os_release_ver"] = platform.version()
-    device_info["architecture"] = platform.machine()
-    return device_info
-
 
 @run_in_com
 def get_running_applications() -> dict[str, Any]:
@@ -82,15 +80,6 @@ def get_running_applications() -> dict[str, Any]:
     }
 
     return apps_data_dict
-
-
-# def run_applications(apps: list[dict[str, Any]]):
-#     current_apps = get_running_applications()
-
-#     for app in apps:
-#         if app["exe"] in [a["exe"] for a in current_apps.values()]:
-#             continue
-#         subprocess.call(app["cmdline"].split())
 
 def run_applications(apps: list[dict[str, Any]]) -> dict[str, Any]:
     current_apps = get_running_applications()
