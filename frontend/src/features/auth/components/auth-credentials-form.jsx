@@ -4,11 +4,13 @@ import { z } from "zod"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 
 const loginSchema = z.object({
   email: z.string().trim().email("Enter a valid email"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z
+    .string()
+    .min(6, "Password must be at least 6 characters")
+    .regex(/^\S+$/, "Password must not contain spaces"),
 })
 
 const signupSchema = loginSchema.extend({
@@ -176,9 +178,7 @@ export function AuthCredentialsForm({
         }}
       />
 
-      {errorMessage && (
-        <Textarea readOnly className="min-h-0 resize-none text-sm" value={String(errorMessage)} />
-      )}
+      {errorMessage ? <p className="text-destructive text-sm">{String(errorMessage)}</p> : null}
 
       <Button type="submit" className="w-full" disabled={isLoading}>
         {isLoading ? "Please wait..." : mode === "login" ? "Log in" : "Create account"}

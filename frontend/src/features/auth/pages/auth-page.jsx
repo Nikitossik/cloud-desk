@@ -192,6 +192,7 @@ export function AuthPage() {
   const switchMode = (nextMode) => {
     setMode(nextMode)
     setAuthErrorMessage("")
+    authMutation.reset()
     resetResolutionState()
     setAllowAutoRedirect(true)
   }

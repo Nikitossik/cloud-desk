@@ -7,6 +7,8 @@ export async function loginRequest(email, password) {
 
   const { data } = await http.post("/auth/token", body, {
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    skipAuthAttach: true,
+    skipAuthRefresh: true,
   })
 
   return data
@@ -18,6 +20,9 @@ export async function signupRequest({ name, surname, email, password }) {
     surname,
     email,
     password,
+  }, {
+    skipAuthAttach: true,
+    skipAuthRefresh: true,
   })
 
   return data
