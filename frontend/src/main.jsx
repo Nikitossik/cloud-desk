@@ -2,7 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import { BrowserRouter } from "react-router";
-import { QueryClientProvider } from "react-query"
+import { QueryClientProvider } from "@tanstack/react-query"
 import { AuthProvider } from "@/features/auth/model/AuthContext"
 import { queryClient } from "@/shared/lib/query-client"
 import App from './App.jsx'

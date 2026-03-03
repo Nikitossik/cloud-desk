@@ -31,3 +31,9 @@ export function setDeviceFingerprint(fingerprint) {
   if (!fingerprint) return
   localStorage.setItem(DEVICE_FINGERPRINT_KEY, fingerprint)
 }
+
+export function regenerateDeviceFingerprint() {
+  const nextFingerprint = generateFingerprint()
+  localStorage.setItem(DEVICE_FINGERPRINT_KEY, nextFingerprint)
+  return nextFingerprint
+}

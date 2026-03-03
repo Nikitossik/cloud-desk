@@ -89,6 +89,7 @@ export function AuthProvider({ children }) {
       isAuthenticated: Boolean(token),
       login,
       signup,
+      setAuthToken: saveAccessToken,
       logout,
     }),
     [
@@ -97,6 +98,7 @@ export function AuthProvider({ children }) {
       isBootstrapped,
       login,
       signup,
+      saveAccessToken,
       logout,
     ]
   )

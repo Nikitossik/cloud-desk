@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Header, Response, Cookie, HTTPException
+from fastapi import APIRouter, Depends, Header, Response, Cookie, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from typing import Annotated
 from ..dependencies import get_db, get_resolution_user_id
@@ -9,6 +9,7 @@ from ..schemas.device import DeviceOut
 from ..schemas.device_resolution import (
     ResolveDeviceRebindIn,
     ResolveDeviceCreateIn,
+    ResolveDeviceCancelIn,
 )
 from ..services import AuthService
 from pathlib import Path
@@ -155,5 +156,22 @@ def resolve_device_create(
     )
 
     return token_pair
+
+
+@auth_route.post(
+    "/device/resolve/cancel",
+    summary="Cancels device-resolution flow. Optionally removes user created during signup.",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def cancel_device_resolution(
+    *,
+    db: Annotated[Session, Depends(get_db)],
+    resolution_user_id: Annotated[int, Depends(get_resolution_user_id)],
+    body: ResolveDeviceCancelIn,
+):
+    AuthService(db).cancel_device_resolution(
+        user_id=resolution_user_id,
+        remove_user=body.remove_user,
+    )
 
 

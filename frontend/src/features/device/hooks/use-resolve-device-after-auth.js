@@ -1,5 +1,5 @@
 import { useCallback } from "react"
-import { useQueryClient } from "react-query"
+import { useQueryClient } from "@tanstack/react-query"
 import {
   getCurrentDeviceRequest,
   meDevicesRequest,
@@ -21,10 +21,10 @@ export function useResolveDeviceAfterAuth() {
 
     let knownDevices = []
     try {
-      knownDevices = await queryClient.fetchQuery(
-        USER_DEVICES_QUERY_KEY,
-        meDevicesRequest
-      )
+      knownDevices = await queryClient.fetchQuery({
+        queryKey: USER_DEVICES_QUERY_KEY,
+        queryFn: meDevicesRequest,
+      })
     } catch {
       knownDevices = []
     }
@@ -40,20 +40,20 @@ export function useResolveDeviceAfterAuth() {
 
     let current = null
     try {
-      current = await queryClient.fetchQuery(
-        CURRENT_DEVICE_QUERY_KEY,
-        getCurrentDeviceRequest
-      )
+      current = await queryClient.fetchQuery({
+        queryKey: CURRENT_DEVICE_QUERY_KEY,
+        queryFn: getCurrentDeviceRequest,
+      })
     } catch {
       current = null
     }
 
     let refreshedDevices = []
     try {
-      refreshedDevices = await queryClient.fetchQuery(
-        USER_DEVICES_QUERY_KEY,
-        meDevicesRequest
-      )
+      refreshedDevices = await queryClient.fetchQuery({
+        queryKey: USER_DEVICES_QUERY_KEY,
+        queryFn: meDevicesRequest,
+      })
     } catch {
       refreshedDevices = []
     }

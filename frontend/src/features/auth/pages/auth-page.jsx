@@ -1,109 +1,198 @@
 import { useState } from "react"
 import { Navigate, useNavigate } from "react-router"
-import { useMutation } from "react-query"
+import { useMutation } from "@tanstack/react-query"
 
 import { useAuth } from "@/features/auth/hooks/use-auth"
-import { ensureDeviceFingerprint } from "@/features/device/lib/fingerprint"
-import { useResolveDeviceAfterAuth } from "@/features/device/hooks/use-resolve-device-after-auth"
-import { useUpdateCurrentDeviceMutation } from "@/features/device/hooks/use-update-current-device-mutation"
+import {
+  cancelDeviceResolutionRequest,
+  getResolutionDevicesRequest,
+  resolveDeviceCreateRequest,
+  resolveDeviceRebindRequest,
+} from "@/features/auth/api/auth-api"
+import { ensureDeviceFingerprint, regenerateDeviceFingerprint } from "@/features/device/lib/fingerprint"
+import { detectLocalDeviceRequest } from "@/features/device/api/device-api"
+import {
+  CURRENT_DEVICE_QUERY_KEY,
+  USER_DEVICES_QUERY_KEY,
+} from "@/features/device/lib/query-keys"
+import { queryClient } from "@/shared/lib/query-client"
 import { Button } from "@/components/ui/button"
 import { AuthCredentialsForm } from "@/features/auth/components/auth-credentials-form"
-import { DetectedDeviceDialog } from "@/features/auth/components/detected-device-dialog"
+import { DeviceResolutionDialog } from "@/features/auth/components/device-resolution-dialog"
+
+function extractResolutionToken(error) {
+  const detail = error?.response?.data?.detail
+  if (!detail || typeof detail !== "object") return ""
+  if (detail.code !== "device_resolution_required") return ""
+  return detail.resolution_token || ""
+}
 
 export function AuthPage() {
   const navigate = useNavigate()
-  const { isAuthenticated, login, signup, logout } = useAuth()
-  const resolveDeviceAfterAuth = useResolveDeviceAfterAuth()
+  const { isAuthenticated, login, signup, setAuthToken } = useAuth()
 
   const [mode, setMode] = useState("login")
-  const [deviceName, setDeviceName] = useState("")
-  const [deviceStepError, setDeviceStepError] = useState("")
   const [authErrorMessage, setAuthErrorMessage] = useState("")
-  const [isDeviceModalOpen, setIsDeviceModalOpen] = useState(false)
-  const [detectedDevice, setDetectedDevice] = useState(null)
+  const [resolutionError, setResolutionError] = useState("")
+  const [isResolutionModalOpen, setIsResolutionModalOpen] = useState(false)
+  const [resolutionMode, setResolutionMode] = useState("login")
+  const [resolutionToken, setResolutionToken] = useState("")
+  const [resolutionDevices, setResolutionDevices] = useState([])
+  const [localDeviceInfo, setLocalDeviceInfo] = useState(null)
   const [allowAutoRedirect, setAllowAutoRedirect] = useState(true)
 
-  const authMutation = useMutation(async (values) => {
-    setAuthErrorMessage("")
-    setDeviceStepError("")
+  const authMutation = useMutation({
+    mutationFn: async (values) => {
+      setAuthErrorMessage("")
+      setResolutionError("")
 
-    if (mode === "login") {
-      await login(values.email, values.password)
-      const result = await resolveDeviceAfterAuth()
+      try {
+        if (mode === "signup") {
+          ensureDeviceFingerprint()
+          await signup({
+            name: values.name,
+            surname: values.surname,
+            email: values.email,
+            password: values.password,
+          })
+          navigate("/", { replace: true })
+          return
+        }
 
-      if (result.wasKnown) {
+        await login(values.email, values.password)
         navigate("/", { replace: true })
+      } catch (error) {
+        const nextResolutionToken = extractResolutionToken(error)
+
+        if (!nextResolutionToken) {
+          throw error
+        }
+
+        const localDevice = await detectLocalDeviceRequest()
+        const devices =
+          mode === "login" ? await getResolutionDevicesRequest(nextResolutionToken) : []
+
+        setResolutionToken(nextResolutionToken)
+        setResolutionDevices(devices)
+        setLocalDeviceInfo(localDevice)
+        setResolutionMode(mode)
+        setIsResolutionModalOpen(true)
+        setAllowAutoRedirect(false)
+      }
+    },
+  })
+
+  const resolutionMutation = useMutation({
+    mutationFn: async (payload) => {
+      const nextFingerprint = regenerateDeviceFingerprint()
+
+      if (!resolutionToken) {
+        throw new Error("Resolution token is missing")
+      }
+
+      if (payload.action === "rebind") {
+        const data = await resolveDeviceRebindRequest({
+          resolutionToken,
+          targetDeviceId: payload.targetDeviceId,
+          newFingerprint: nextFingerprint,
+        })
+        setAuthToken(data.access_token)
         return
       }
 
-      logout("login_device_not_found")
-      setAuthErrorMessage("Device not found for this fingerprint. Bind/create flow will be added next.")
-      return
-    }
-
-    await signup({
-      name: values.name,
-      surname: values.surname,
-      email: values.email,
-      password: values.password,
-    })
-
-    ensureDeviceFingerprint()
-
-    const result = await resolveDeviceAfterAuth()
-    setDetectedDevice(result.currentDevice)
-    setDeviceName(result.currentDevice?.display_name || "")
-    setIsDeviceModalOpen(true)
-    setAllowAutoRedirect(false)
-  })
-
-  const deviceMutation = useUpdateCurrentDeviceMutation({
-    onSuccess: () => {
-      setIsDeviceModalOpen(false)
-      setAllowAutoRedirect(true)
-      navigate("/", { replace: true })
-    },
-    onError: (error) => {
-      const message =
-        error?.response?.data?.detail ||
-        error?.message ||
-        "Failed to save device name"
-      setDeviceStepError(String(message))
+      const data = await resolveDeviceCreateRequest({
+        resolutionToken,
+        newFingerprint: nextFingerprint,
+        displayName: payload.displayName,
+      })
+      setAuthToken(data.access_token)
     },
   })
 
-  if (isAuthenticated && allowAutoRedirect && !isDeviceModalOpen) {
+  const cancelResolutionMutation = useMutation({
+    mutationFn: async ({ token, mode }) => {
+      if (!token) return
+
+      await cancelDeviceResolutionRequest({
+        resolutionToken: token,
+        removeUser: mode === "signup",
+      })
+    },
+  })
+
+  if (isAuthenticated && allowAutoRedirect && !isResolutionModalOpen) {
     return <Navigate to="/" replace />
   }
 
-  const isLoading = authMutation.isLoading || deviceMutation.isLoading
+  const isLoading = authMutation.isPending || resolutionMutation.isPending
   const errorMessage =
     authErrorMessage ||
     authMutation.error?.response?.data?.detail ||
     authMutation.error?.message
 
   const handleAuthSubmit = (values) => {
-    if (mode === "signup") {
-      setAllowAutoRedirect(false)
-    } else {
-      setAllowAutoRedirect(true)
-    }
+    setAllowAutoRedirect(true)
     authMutation.mutate(values)
   }
 
-  const handleDeviceSubmit = (nextDeviceName) => {
-    setDeviceStepError("")
-    setDeviceName(nextDeviceName)
-    deviceMutation.mutate(nextDeviceName)
+  const handleResolutionSubmit = (payload) => {
+    setResolutionError("")
+    resolutionMutation.mutate(payload, {
+      onSuccess: async () => {
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: CURRENT_DEVICE_QUERY_KEY }),
+          queryClient.invalidateQueries({ queryKey: USER_DEVICES_QUERY_KEY }),
+        ])
+
+        setIsResolutionModalOpen(false)
+        setAllowAutoRedirect(true)
+        navigate("/", { replace: true })
+      },
+      onError: (error) => {
+        const message =
+          error?.response?.data?.detail ||
+          error?.message ||
+          "Failed to resolve device"
+        setResolutionError(String(message))
+      },
+    })
+  }
+
+  const resetResolutionState = () => {
+    setResolutionError("")
+    setResolutionToken("")
+    setResolutionDevices([])
+    setLocalDeviceInfo(null)
+    setResolutionMode("login")
+    setIsResolutionModalOpen(false)
+    setAllowAutoRedirect(false)
+  }
+
+  const handleResolutionCancel = () => {
+    cancelResolutionMutation.mutate(
+      {
+        token: resolutionToken,
+        mode: resolutionMode,
+      },
+      {
+        onSuccess: () => {
+          resetResolutionState()
+        },
+        onError: (error) => {
+          const message =
+            error?.response?.data?.detail ||
+            error?.message ||
+            "Failed to cancel device verification"
+          setResolutionError(String(message))
+        },
+      }
+    )
   }
 
   const switchMode = (nextMode) => {
     setMode(nextMode)
-    setDeviceStepError("")
     setAuthErrorMessage("")
-    setDeviceName("")
-    setDetectedDevice(null)
-    setIsDeviceModalOpen(false)
+    resetResolutionState()
     setAllowAutoRedirect(true)
   }
 
@@ -143,13 +232,15 @@ export function AuthPage() {
           onSubmitValues={handleAuthSubmit}
         />
 
-        <DetectedDeviceDialog
-          open={isDeviceModalOpen}
-          detectedDevice={detectedDevice}
-          initialDeviceName={deviceName}
-          isLoading={deviceMutation.isLoading}
-          errorMessage={deviceStepError}
-          onSubmitDeviceName={handleDeviceSubmit}
+        <DeviceResolutionDialog
+          open={isResolutionModalOpen}
+          mode={resolutionMode}
+          devices={resolutionDevices}
+          currentDeviceInfo={localDeviceInfo}
+          isLoading={resolutionMutation.isPending || cancelResolutionMutation.isPending}
+          errorMessage={resolutionError}
+          onSubmitResolution={handleResolutionSubmit}
+          onCancelResolution={handleResolutionCancel}
         />
       </div>
     </div>

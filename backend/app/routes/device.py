@@ -1,16 +1,25 @@
 from fastapi import APIRouter, Depends, status
 import sqlalchemy.orm as so
 from typing import Annotated
-from ..schemas.device import DeviceOut, DeviceUpdate
+from ..schemas.device import DeviceOut, DeviceUpdate, DeviceBase
 from ..schemas.application import ApplicationBase
 import app.models as md
 from ..services import DeviceService
 from ..dependencies.database import get_db
 from ..dependencies.device import get_current_device
+import app.utils.core as uc
 from pathlib import Path
 
 device_route = APIRouter(prefix="/device", tags=["device"])
 DOCS_PATH = Path(__file__).parent.parent.parent / "api_docs" / "device"
+
+@device_route.get(
+    "/local",
+    summary="Retrieves details about the currently registered device.",
+    response_model=DeviceBase,
+)
+def get_local_device():
+    return uc.get_device_data()
 
 
 @device_route.get(
@@ -19,7 +28,7 @@ DOCS_PATH = Path(__file__).parent.parent.parent / "api_docs" / "device"
     summary="Retrieves details about the currently registered device.",
     response_model=DeviceOut,
 )
-def get_device(current_device: Annotated[md.Device, Depends(get_current_device)]):
+def get_current_device(current_device: Annotated[md.Device, Depends(get_current_device)]):
     return current_device
 
 
@@ -36,16 +45,16 @@ def update_device(
     return DeviceService(db).update_current_device(current_device, device_update)
 
 @device_route.delete(
-    "/current",
+    "/{device_id}",
     description=(DOCS_PATH / "delete_device.md").read_text(),
-    summary="Deletes the currently registered device from the system.",
+    summary="Deletes the specified device from the system.",
     status_code=status.HTTP_204_NO_CONTENT,
 )
-def delete_current_device(
+def delete_device(
     db: Annotated[so.Session, Depends(get_db)],
-    current_device: Annotated[md.Device, Depends(get_current_device)],
+    device_id: str,
 ):
-    DeviceService(db).delete_device(current_device)
+    DeviceService(db).delete(device_id)
 
 
 @device_route.get(

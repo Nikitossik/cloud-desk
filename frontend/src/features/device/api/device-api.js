@@ -24,3 +24,11 @@ export async function meDevicesRequest() {
   const { data } = await http.get("/user/me/devices")
   return data
 }
+
+export async function detectLocalDeviceRequest() {
+  const { data } = await http.get("/device/local", {
+    skipAuthAttach: true,
+    skipAuthRefresh: true,
+  })
+  return data
+}

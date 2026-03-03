@@ -143,6 +143,16 @@ class AuthService:
 
         return self.create_token_pair(user=user)
 
+    def cancel_device_resolution(self, user_id: int, remove_user: bool = False) -> None:
+        if not remove_user:
+            return
+
+        found_user = self.user_repo.get(user_id)
+        if not found_user:
+            return
+
+        self.user_repo.delete(user_id)
+
     def refresh_access_token(self, refresh_token: str) -> dict[str, Any]:
         try:
             payload = jwt.decode(

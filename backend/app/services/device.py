@@ -87,6 +87,14 @@ class DeviceService:
                 self.application_repo.create({**app, "device_id": device.id})
 
         return device.apps
+    
+    def delete(self, device_id: str):
+        device = self.device_repo.get(device_id)
+
+        if not device:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Device not found")
+
+        self.device_repo.delete_instance(device)
 
     def delete_device(self, device: Device):
         self.device_repo.delete_instance(device)

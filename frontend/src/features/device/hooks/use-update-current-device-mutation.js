@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { updateCurrentDeviceRequest } from "@/features/device/api/device-api"
 import {
   CURRENT_DEVICE_QUERY_KEY,
@@ -8,7 +8,8 @@ import {
 export function useUpdateCurrentDeviceMutation(options = {}) {
   const queryClient = useQueryClient()
 
-  return useMutation((displayName) => updateCurrentDeviceRequest(displayName), {
+  return useMutation({
+    mutationFn: (displayName) => updateCurrentDeviceRequest(displayName),
     ...options,
     onSuccess: async (data, variables, context) => {
       queryClient.setQueryData(CURRENT_DEVICE_QUERY_KEY, data)

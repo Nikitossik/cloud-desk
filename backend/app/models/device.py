@@ -17,7 +17,7 @@ class Device(Base):
     __tablename__ = "devices"
 
     id: so.Mapped[str] = so.mapped_column(
-        sa.Uuid(), primary_key=True, default=uuid.uuid4
+        sa.Uuid(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4())
     )
     fingerprint: so.Mapped[str] = so.mapped_column(index=True) 
     display_name: so.Mapped[str | None] = so.mapped_column(sa.String(60), nullable=True)
