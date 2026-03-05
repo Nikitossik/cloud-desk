@@ -9,12 +9,12 @@ from ..dependencies import get_current_device
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     
-    # deactivating last active session on shutdown if present and save usage data
+    # stopping last active session on shutdown if present and save usage data
     yield
     db = SessionLocal()
     try:
         device = DeviceRepository(db).get_local_device()
         if device:
-            DeviceSessionService(db).deactivate_last_active_session(device)
+            DeviceSessionService(db).stop_last_active_session(device)
     finally:
         db.close()

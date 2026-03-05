@@ -67,7 +67,7 @@ export function SessionPage() {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuItem>
               {isActive ? <Pause /> : <Play />}
-              {isActive ? "Deactivate" : "Activate"}
+              {isActive ? "Stop" : "Start"}
             </DropdownMenuItem>
             <DropdownMenuItem>
               <RotateCcw />

@@ -126,23 +126,23 @@ def clone_active_session(
 
 
 @session_route.post(
-    "/active/deactivate",
-    description=(ACTIVE_SESSION_DOCS_PATH / "deactivate_active_session.md").read_text(),
+    "/active/stop",
+    description=(ACTIVE_SESSION_DOCS_PATH / "stop_active_session.md").read_text(),
     summary=(
-        "Optionally saves application usage data before deactivation.",
-        "Deactivates the current active session.",
+        "Optionally saves application usage data before stopping.",
+        "Stops the current active session.",
     ),
     status_code=status.HTTP_201_CREATED,
     response_model=DeviceSessionOut,
 )
-def deactivate_active_session(
+def stop_active_session(
     *,
     db: Annotated[so.Session, Depends(d.get_db)],
     device: Annotated[md.Device, Depends(d.get_current_device)],
     active_session: Annotated[md.DeviceSession, Depends(d.get_active_session)]
 ):
     DeviceService(db).sync_applications(device)
-    return DeviceSessionService(db).deactivate_session(active_session, save_usage)
+    return DeviceSessionService(db).stop_session(active_session, save_usage)
 
 
 @session_route.post(
@@ -230,18 +230,18 @@ def delete_session_by_slug(
 
 
 @session_route.post(
-    "/{session_slug}/activate",
-    description=(SESSION_DOCS_PATH / "post_session_activate.md").read_text(),
-    summary="Activates the selected saved session for the authenticated device.",
+    "/{session_slug}/start",
+    description=(SESSION_DOCS_PATH / "post_session_start.md").read_text(),
+    summary="Starts the selected saved session for the authenticated device.",
     response_model=DeviceSessionOut,
 )
-def activate_sessin_by_slug(
+def start_session_by_slug(
     *,
     session_slug: str,
     device: Annotated[md.Device, Depends(d.get_current_device)],
     db: Annotated[so.Session, Depends(d.get_db)],
 ):
-    return DeviceSessionService(db).activate_session_by_slug(session_slug, device)
+    return DeviceSessionService(db).start_session_by_slug(session_slug, device)
 
 
 @session_route.post(

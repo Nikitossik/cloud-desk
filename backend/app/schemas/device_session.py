@@ -22,9 +22,9 @@ class DeviceSessionBase(BaseModel):
 
 
 class DeviceSessionIn(DeviceSessionBase):
-    activate: bool = Field(
+    start: bool = Field(
         default=True,
-        description="Flag indicating if the session should be activated upon creation.",
+        description="Flag indicating if the session should be started upon creation.",
     )
 
     @model_validator(mode="after")

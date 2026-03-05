@@ -26,10 +26,10 @@ class DeviceSessionService:
         session_data = device_session.model_dump()
 
         session_data["device_id"] = device.id
-        session_data["is_active"] = session_data["activate"]
+        session_data["is_active"] = session_data["start"]
 
         if session_data["is_active"]:
-            self.deactivate_last_active_session(device)
+            self.stop_last_active_session(device)
 
         found_session = self.device_session_repo.get_by_slugname(
             session_data["slugname"], device
@@ -51,27 +51,27 @@ class DeviceSessionService:
         SessionTracker.stop(session.id)
         self.device_session_repo.delete_instance(session)
 
-    def activate_session(self, session: DeviceSession, device: Device) -> DeviceSession:
+    def start_session(self, session: DeviceSession, device: Device) -> DeviceSession:
         if session.is_active:
             return session
 
-        self.deactivate_last_active_session(device)
+        self.stop_last_active_session(device)
 
-        activated_session = self.device_session_repo.update(
+        started_session = self.device_session_repo.update(
             session, {"is_active": True}
         )
 
-        SessionTracker.start(activated_session.id)
+        SessionTracker.start(started_session.id)
 
-        return activated_session
+        return started_session
 
-    def deactivate_last_active_session(self, device: Device):
+    def stop_last_active_session(self, device: Device):
         last_active_session = self.device_session_repo.get_active_session(device)
 
         if last_active_session:
-            self.deactivate_session(last_active_session)
+            self.stop_session(last_active_session)
 
-    def deactivate_session(
+    def stop_session(
         self, session: DeviceSession
     ) -> DeviceSession:
         saved_session = self.save_session_state(session)
@@ -107,7 +107,7 @@ class DeviceSessionService:
         return saved_session
 
     def restore_session(self, session: DeviceSession, device: Device) -> DeviceSessionWithReport:
-        self.deactivate_last_active_session(device)
+        self.stop_last_active_session(device)
         
         # only restoring apps that were active in session
         apps_to_restore = [
@@ -115,7 +115,7 @@ class DeviceSessionService:
         ]
 
         restore_report = uc.run_applications(apps_to_restore)
-        new_active_session = self.activate_session(session, device)
+        new_active_session = self.start_session(session, device)
         
         time.sleep(1)
         running_apps_data = uc.get_running_applications()
@@ -174,13 +174,13 @@ class DeviceSessionService:
         for session in device.sessions:
             self.delete_session(session)
 
-    def activate_session_by_slug(
+    def start_session_by_slug(
         self, session_slug: str, device: Device
     ) -> DeviceSession:
         session = self.get_session_by_slugname(session_slug, device)
-        activated_session = self.activate_session(session, device)
+        started_session = self.start_session(session, device)
 
-        return activated_session
+        return started_session
 
     def restore_session_by_slug(
         self, session_slug: str, device: Device
