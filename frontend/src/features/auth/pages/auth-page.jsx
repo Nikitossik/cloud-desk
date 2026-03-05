@@ -4,6 +4,10 @@ import { useMutation } from "@tanstack/react-query"
 
 import { useAuth } from "@/features/auth/hooks/use-auth"
 import {
+  extractResolutionToken,
+  isResolutionTokenProblem,
+} from "@/features/auth/lib/resolution-token"
+import {
   cancelDeviceResolutionRequest,
   getResolutionDevicesRequest,
   resolveDeviceCreateRequest,
@@ -19,13 +23,6 @@ import { queryClient } from "@/shared/lib/query-client"
 import { Button } from "@/components/ui/button"
 import { AuthCredentialsForm } from "@/features/auth/components/auth-credentials-form"
 import { DeviceResolutionDialog } from "@/features/auth/components/device-resolution-dialog"
-
-function extractResolutionToken(error) {
-  const detail = error?.response?.data?.detail
-  if (!detail || typeof detail !== "object") return ""
-  if (detail.code !== "device_resolution_required") return ""
-  return detail.resolution_token || ""
-}
 
 export function AuthPage() {
   const navigate = useNavigate()
@@ -68,16 +65,32 @@ export function AuthPage() {
           throw error
         }
 
-        const localDevice = await detectLocalDeviceRequest()
-        const devices =
-          mode === "login" ? await getResolutionDevicesRequest(nextResolutionToken) : []
+        try {
+          const localDevice = await detectLocalDeviceRequest()
+          const devices =
+            mode === "login" ? await getResolutionDevicesRequest(nextResolutionToken) : []
 
-        setResolutionToken(nextResolutionToken)
-        setResolutionDevices(devices)
-        setLocalDeviceInfo(localDevice)
-        setResolutionMode(mode)
-        setIsResolutionModalOpen(true)
-        setAllowAutoRedirect(false)
+          setResolutionToken(nextResolutionToken)
+          setResolutionDevices(devices)
+          setLocalDeviceInfo(localDevice)
+          setResolutionMode(mode)
+          setIsResolutionModalOpen(true)
+          setAllowAutoRedirect(false)
+        } catch (resolutionError) {
+          if (isResolutionTokenProblem(resolutionError)) {
+            setResolutionError("")
+            setResolutionToken("")
+            setResolutionDevices([])
+            setLocalDeviceInfo(null)
+            setResolutionMode("login")
+            setIsResolutionModalOpen(false)
+            setAllowAutoRedirect(true)
+            setAuthErrorMessage("Device verification session expired. Please try again.")
+            return
+          }
+
+          throw resolutionError
+        }
       }
     },
   })
@@ -131,8 +144,20 @@ export function AuthPage() {
     authMutation.error?.message
 
   const handleAuthSubmit = (values) => {
+    setAuthErrorMessage("")
     setAllowAutoRedirect(true)
     authMutation.mutate(values)
+  }
+
+  const handleResolutionTokenProblem = () => {
+    setResolutionError("")
+    setResolutionToken("")
+    setResolutionDevices([])
+    setLocalDeviceInfo(null)
+    setResolutionMode("login")
+    setIsResolutionModalOpen(false)
+    setAllowAutoRedirect(true)
+    setAuthErrorMessage("Device verification session expired. Please try again.")
   }
 
   const handleResolutionSubmit = (payload) => {
@@ -149,6 +174,11 @@ export function AuthPage() {
         navigate("/", { replace: true })
       },
       onError: (error) => {
+        if (isResolutionTokenProblem(error)) {
+          handleResolutionTokenProblem()
+          return
+        }
+
         const message =
           error?.response?.data?.detail ||
           error?.message ||
@@ -179,6 +209,11 @@ export function AuthPage() {
           resetResolutionState()
         },
         onError: (error) => {
+          if (isResolutionTokenProblem(error)) {
+            handleResolutionTokenProblem()
+            return
+          }
+
           const message =
             error?.response?.data?.detail ||
             error?.message ||
