@@ -1,6 +1,7 @@
 import { useParams } from "react-router"
 import {
   Copy,
+  Pause,
   Pencil,
   Play,
   RotateCcw,
@@ -16,24 +17,38 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-
-const mockSessionBySlug = {
-  "my-first-session": {
-    name: "My First Session",
-    description:
-      "This is a mock description for the selected session. Here you will see full session details, apps state, and usage history.",
-    status: "Inactive",
-  },
-}
+import { useSessionBySlugQuery } from "@/features/session/hooks/use-session-by-slug-query"
+import { formatUiDateTime } from "@/shared/lib/date-time"
 
 export function SessionPage() {
-  const { session_slug } = useParams()
-  const session = mockSessionBySlug[session_slug] ?? {
-    name: `Session ${session_slug}`,
-    description:
-      "This is a mock description for the selected session. Here you will see full session details, apps state, and usage history.",
-    status: "Inactive",
+  const { session_slug = "" } = useParams()
+  const {
+    data: session,
+    isLoading,
+    error,
+  } = useSessionBySlugQuery(session_slug)
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+        <p className="text-muted-foreground">Loading session...</p>
+      </div>
+    )
   }
+
+  if (!session) {
+    const errorMessage = error?.response?.data?.detail || error?.message || "Session not found"
+
+    return (
+      <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+        <p className="text-destructive">{String(errorMessage)}</p>
+      </div>
+    )
+  }
+
+  const isActive = Boolean(session.is_active)
+  const statusText = isActive ? "Active" : "Inactive"
+  const createdAtText = formatUiDateTime(session.created_at)
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
@@ -51,8 +66,8 @@ export function SessionPage() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuItem>
-              <Play />
-              Activate
+              {isActive ? <Pause /> : <Play />}
+              {isActive ? "Deactivate" : "Activate"}
             </DropdownMenuItem>
             <DropdownMenuItem>
               <RotateCcw />
@@ -77,14 +92,18 @@ export function SessionPage() {
 
       <div>
         <Badge variant="outline" className="gap-2 px-3 py-1 text-sm">
-          <span className="size-2 rounded-full bg-zinc-500" />
-          {session.status}
+          <span className={`size-2 rounded-full ${isActive ? "bg-green-500" : "bg-zinc-500"}`} />
+          {statusText}
+          <span className="text-muted-foreground">•</span>
+          <span>Created at {createdAtText}</span>
         </Badge>
       </div>
 
-      <p className="text-muted-foreground max-w-3xl leading-relaxed">
-        {session.description}
-      </p>
+      {session.description ? (
+        <p className="text-muted-foreground max-w-3xl leading-relaxed">
+          {session.description}
+        </p>
+      ) : null}
 
       <section className="bg-card text-card-foreground rounded-xl border p-4">
         <h2 className="text-xl font-semibold">Applications</h2>

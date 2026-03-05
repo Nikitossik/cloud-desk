@@ -6,29 +6,7 @@ import {
   FieldTitle,
 } from "@/components/ui/field"
 import { RadioGroupItem } from "@/components/ui/radio-group"
-
-function formatDate(value) {
-  if (!value) return "-"
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return "-"
-
-  const datePart = date
-    .toLocaleDateString("en-US", {
-      month: "short",
-      day: "2-digit",
-      year: "numeric",
-    })
-    .replace(",", "")
-
-  const timePart = date.toLocaleTimeString("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  })
-
-  return `${datePart}, ${timePart}`
-}
+import { formatUiDateTime } from "@/shared/lib/date-time"
 
 export function DeviceResolutionExistingOption({ device, checked }) {
   const inputId = `device-option-${device.id}`
@@ -43,7 +21,7 @@ export function DeviceResolutionExistingOption({ device, checked }) {
             OS: {device.os_name || "-"} • Release: {device.os_release || "-"} • Architecture: {device.architecture || "-"}
           </FieldDescription>
           <FieldDescription className="text-xs">
-            Created: {formatDate(device.created_at)} • Last seen: {formatDate(device.last_seen_at)}
+            Created: {formatUiDateTime(device.created_at)} • Last seen: {formatUiDateTime(device.last_seen_at)}
           </FieldDescription>
         </FieldContent>
         <RadioGroupItem value={device.id} id={inputId} />

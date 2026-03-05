@@ -4,6 +4,7 @@ import {
   CURRENT_DEVICE_QUERY_KEY,
   USER_DEVICES_QUERY_KEY,
 } from "@/features/device/lib/query-keys"
+import { USER_SIDEBAR_QUERY_KEY } from "@/features/user/lib/query-keys"
 
 export function useUpdateCurrentDeviceMutation(options = {}) {
   const queryClient = useQueryClient()
@@ -22,6 +23,22 @@ export function useUpdateCurrentDeviceMutation(options = {}) {
         }
 
         return list.map((device) => (device.id === data.id ? data : device))
+      })
+
+      queryClient.setQueryData(USER_SIDEBAR_QUERY_KEY, (prev) => {
+        if (!prev || typeof prev !== "object") return prev
+
+        const devices = Array.isArray(prev.devices) ? prev.devices : []
+        const hasDevice = devices.some((device) => device.id === data.id)
+
+        const nextDevices = hasDevice
+          ? devices.map((device) => (device.id === data.id ? { ...device, ...data } : device))
+          : [...devices, data]
+
+        return {
+          ...prev,
+          devices: nextDevices,
+        }
       })
 
       await options.onSuccess?.(data, variables, context)

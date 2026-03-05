@@ -2,8 +2,7 @@ import { useState } from "react"
 import { MonitorCog } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { FaApple, FaDesktop, FaLinux, FaPen, FaWindows } from "react-icons/fa"
-import { useCurrentDeviceQuery } from "@/features/device/hooks/use-current-device-query"
-import { useUserDevicesQuery } from "@/features/device/hooks/use-user-devices-query"
+import { useUserSidebarQuery } from "@/features/user/hooks/use-user-sidebar-query"
 import { useUpdateCurrentDeviceMutation } from "@/features/device/hooks/use-update-current-device-mutation"
 import { Input } from "@/components/ui/input"
 import {
@@ -30,8 +29,8 @@ export function DevicesNavGroup() {
   const [editingDeviceId, setEditingDeviceId] = useState(null)
   const [editingName, setEditingName] = useState("")
 
-  const { data: currentDevice } = useCurrentDeviceQuery()
-  const { data: userDevices = [], isLoading: isDevicesLoading } = useUserDevicesQuery()
+  const { data: sidebarData, isLoading: isDevicesLoading } = useUserSidebarQuery()
+  const userDevices = Array.isArray(sidebarData?.devices) ? sidebarData.devices : []
   const updateCurrentDeviceMutation = useUpdateCurrentDeviceMutation({
     onSuccess: () => {
       setEditingDeviceId(null)
@@ -76,7 +75,7 @@ export function DevicesNavGroup() {
     osVersion: device.os_release_ver,
     architecture: device.architecture,
     macAddress: device.mac_address,
-    isActive: currentDevice?.id === device.id,
+    isActive: Boolean(device.is_current),
   }))
 
   return (

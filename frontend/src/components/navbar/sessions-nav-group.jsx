@@ -1,6 +1,7 @@
 import { Monitor, Plus } from "lucide-react"
 import { NavLink } from "react-router"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { useUserSidebarQuery } from "@/features/user/hooks/use-user-sidebar-query"
 import {
   SidebarGroup,
   SidebarMenu,
@@ -12,14 +13,18 @@ import {
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
 
-const mockSessions = [
-  {
-    title: "My First Session",
-    slug: "my-first-session",
-  },
-]
-
 export function SessionsNavGroup({ onAddSession }) {
+  const { data: sidebarData, isLoading: isSessionsLoading } = useUserSidebarQuery()
+  const userSessions = Array.isArray(sidebarData?.sessions) ? sidebarData.sessions : []
+
+  const sessions = userSessions
+    .map((session) => ({
+      slug: session.slugname || session.slug || "",
+      name: session.name || "Unnamed session",
+      isActive: Boolean(session.is_active),
+    }))
+    .filter((session) => Boolean(session.slug))
+
   return (
     <SidebarGroup>
       <SidebarMenu>
@@ -50,18 +55,32 @@ export function SessionsNavGroup({ onAddSession }) {
       </SidebarMenu>
 
       <SidebarMenuSub>
-        {mockSessions.length === 0 ? (
+        {isSessionsLoading ? (
+          <SidebarMenuSubItem>
+            <SidebarMenuSubButton asChild>
+              <span className="text-muted-foreground">Loading sessions...</span>
+            </SidebarMenuSubButton>
+          </SidebarMenuSubItem>
+        ) : sessions.length === 0 ? (
           <SidebarMenuSubItem>
             <SidebarMenuSubButton asChild>
               <span className="text-muted-foreground">No sessions</span>
             </SidebarMenuSubButton>
           </SidebarMenuSubItem>
         ) : (
-          mockSessions.map((session) => (
+          sessions.map((session) => (
             <SidebarMenuSubItem key={session.slug}>
               <SidebarMenuSubButton asChild>
                 <NavLink to={`/session/${session.slug}`}>
-                  <span>{session.title}</span>
+                  <span className="flex w-full min-w-0 items-center justify-between gap-2">
+                    <span className="truncate">{session.name}</span>
+                    {session.isActive ? (
+                      <span
+                        className="h-2.5 w-2.5 shrink-0 rounded-full bg-green-500"
+                        aria-label="Active session"
+                      />
+                    ) : null}
+                  </span>
                 </NavLink>
               </SidebarMenuSubButton>
             </SidebarMenuSubItem>

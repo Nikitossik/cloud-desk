@@ -19,6 +19,7 @@ import {
   CURRENT_DEVICE_QUERY_KEY,
   USER_DEVICES_QUERY_KEY,
 } from "@/features/device/lib/query-keys"
+import { USER_SIDEBAR_QUERY_KEY } from "@/features/user/lib/query-keys"
 import { queryClient } from "@/shared/lib/query-client"
 import { Button } from "@/components/ui/button"
 import { AuthCredentialsForm } from "@/features/auth/components/auth-credentials-form"
@@ -167,6 +168,7 @@ export function AuthPage() {
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: CURRENT_DEVICE_QUERY_KEY }),
           queryClient.invalidateQueries({ queryKey: USER_DEVICES_QUERY_KEY }),
+          queryClient.invalidateQueries({ queryKey: USER_SIDEBAR_QUERY_KEY }),
         ])
 
         setIsResolutionModalOpen(false)
