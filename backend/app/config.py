@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     RESOLUTION_TOKEN_EXPIRE_MINUTES: int
     SQLALCHEMY_DATABASE_URL: str
     HOST: str
+    DEBUG: bool
 
     model_config = SettingsConfigDict(env_file=BASE_DIR / ".env")
 

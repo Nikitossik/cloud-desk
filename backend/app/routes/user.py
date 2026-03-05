@@ -4,7 +4,6 @@ from ..models import User
 from ..dependencies import get_db, get_current_user
 from sqlalchemy.orm import Session
 from ..schemas.user import UserIn, UserUpdate, UserOut
-from ..schemas.device import DeviceOut
 from ..services.user import UserService
 from pathlib import Path
 
@@ -27,17 +26,6 @@ async def get_me(
     current_user: Annotated[User, Depends(get_current_user)],
 ):
     return current_user
-
-@user_route.get(
-    "/me/devices",
-    summary="Retrieves the currently authenticated user's devices.",
-    response_model=list[DeviceOut],
-)
-async def get_me(
-    current_user: Annotated[User, Depends(get_current_user)],
-):
-    return current_user.devices
-
 
 
 @user_route.patch("/me", summary="Updates the currently authenticated user's profile.", response_model=UserOut)

@@ -36,17 +36,6 @@ APP_DOCS = {
             ),
         },
         {
-            "name": "active session",
-            "description": (
-                "Endpoints for managing the currently active device session, "
-                "including retrieving session details, saving session state, "
-                "enabling or disabling tracking of application usage, "
-                "deactivating and restoring sessions, and cloning active sessions. "
-                "If the active session is not found, the operation cannot be performed and the API returns a 404 error"
-                "All operations require valid authentication tokens."
-            ),
-        },
-        {
             "name": "session",
             "description": (
                 "Endpoints for managing saved device sessions: creating, cloning, activating, restoring, "

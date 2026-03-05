@@ -9,12 +9,12 @@ from typing import Annotated
 from pathlib import Path
 
 session_route = APIRouter(prefix="/session", tags=["session"])
-DOCS_PATH = Path(__file__).parent.parent.parent / "api_docs" / "session"
-
+SESSION_DOCS_PATH = Path(__file__).parent.parent.parent / "api_docs" / "session"
+ACTIVE_SESSION_DOCS_PATH = Path(__file__).parent.parent.parent / "api_docs" / "active_session"
 
 @session_route.get(
     "/",
-    description=(DOCS_PATH / "get_session_all.md").read_text(),
+    description=(SESSION_DOCS_PATH / "get_session_all.md").read_text(),
     summary="Retrieves a list of all saved sessions for the authenticated user's device.",
     response_model=list[DeviceSessionOut],
 )
@@ -27,7 +27,7 @@ def get_all_sessions(
 
 @session_route.post(
     "/",
-    description=(DOCS_PATH / "post_session_create.md").read_text(),
+    description=(SESSION_DOCS_PATH / "post_session_create.md").read_text(),
     summary=("Creates a new session for the authenticated user's device.",),
     status_code=status.HTTP_201_CREATED,
     response_model=DeviceSessionOut,
@@ -43,7 +43,7 @@ def create_session(
 
 @session_route.delete(
     "/",
-    description=(DOCS_PATH / "delete_session_all.md").read_text(),
+    description=(SESSION_DOCS_PATH / "delete_session_all.md").read_text(),
     summary="Deletes all saved sessions associated with the authenticated device.",
     status_code=status.HTTP_204_NO_CONTENT,
 )
@@ -53,11 +53,120 @@ def delete_all_sessions(
     device: Annotated[md.Device, Depends(d.get_current_device)],
 ):
     DeviceSessionService(db).delete_all_sessions(device)
+    
+@session_route.get(
+    "/active",
+    description=(ACTIVE_SESSION_DOCS_PATH / "get_active_session.md").read_text(),
+    summary=(
+        "Retrieves details about the current active session for the authenticated user's device.",
+        "If no active session is found, the API returns a 404 error with a specific message.",
+        "This behavior applies to all operations involving an active session.",
+    ),
+    response_model=DeviceSessionOut,
+)
+def get_active_session(
+    *,
+    db: Annotated[so.Session, Depends(d.get_db)],
+    device: Annotated[md.Device, Depends(d.get_current_device)],
+    active_session: Annotated[md.DeviceSession, Depends(d.get_active_session)],
+):
+    return active_session
+
+
+@session_route.delete(
+    "/active",
+    description=(ACTIVE_SESSION_DOCS_PATH / "delete_active_session.md").read_text(),
+    summary="Deletes the current active session associated with the authenticated device.",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def delete_active_session(
+    *,
+    db: Annotated[so.Session, Depends(d.get_db)],
+    active_session: Annotated[md.DeviceSession, Depends(d.get_active_session)],
+):
+    return DeviceSessionService(db).delete_session(active_session)
+
+@session_route.post(
+    "/active/clone",
+    description=(ACTIVE_SESSION_DOCS_PATH / "clone_active_session.md").read_text(),
+    summary=(
+        "Creates a new session by cloning the current active session.",
+        "If no session name is provided, a slugified name will be automatically generated.",
+    ),
+    status_code=status.HTTP_201_CREATED,
+    response_model=DeviceSessionOut,
+)
+def clone_active_session(
+    *,
+    db: Annotated[so.Session, Depends(d.get_db)],
+    device: Annotated[md.Device, Depends(d.get_current_device)],
+    device_session: DeviceSessionIn,
+    active_session: Annotated[md.DeviceSession, Depends(d.get_active_session)],
+):
+    return DeviceSessionService(db).clone_session_by_slugname(
+        active_session.slugname, device_session, device
+    )
+
+
+# @session_route.post(
+#     "/active/save",
+#     description=(ACTIVE_SESSION_DOCS_PATH / "save_active_session.md").read_text(),
+#     summary="Saves the list of currently active applications for the active session.",
+#     status_code=status.HTTP_201_CREATED,
+#     response_model=DeviceSessionOut,
+# )
+# def save_active_session(
+#     *,
+#     db: Annotated[so.Session, Depends(d.get_db)],
+#     device: Annotated[md.Device, Depends(d.get_current_device)],
+#     active_session: Annotated[md.DeviceSession, Depends(d.get_active_session)],
+# ):
+#     DeviceService(db).sync_applications(device)
+#     return DeviceSessionService(db).save_session(active_session)
+
+
+@session_route.post(
+    "/active/deactivate",
+    description=(ACTIVE_SESSION_DOCS_PATH / "deactivate_active_session.md").read_text(),
+    summary=(
+        "Optionally saves application usage data before deactivation.",
+        "Deactivates the current active session.",
+    ),
+    status_code=status.HTTP_201_CREATED,
+    response_model=DeviceSessionOut,
+)
+def deactivate_active_session(
+    *,
+    db: Annotated[so.Session, Depends(d.get_db)],
+    device: Annotated[md.Device, Depends(d.get_current_device)],
+    active_session: Annotated[md.DeviceSession, Depends(d.get_active_session)]
+):
+    DeviceService(db).sync_applications(device)
+    return DeviceSessionService(db).deactivate_session(active_session, save_usage)
+
+
+@session_route.post(
+    "/active/restore",
+    description=(ACTIVE_SESSION_DOCS_PATH / "restore_active_session.md").read_text(),
+    summary="Restores the session associated with the authenticated device based on the stored slugname.",
+    status_code=status.HTTP_201_CREATED,
+    response_model=DeviceSessionWithReport,
+)
+def restore_active_session(
+    *,
+    db: Annotated[so.Session, Depends(d.get_db)],
+    device: Annotated[md.Device, Depends(d.get_current_device)],
+    active_session: Annotated[md.DeviceSession, Depends(d.get_active_session)],
+):
+    DeviceService(db).sync_applications(device)
+    return DeviceSessionService(db).restore_session_by_slug(
+        active_session.slugname, device
+    )
 
 
 @session_route.get(
     "/{session_slug}",
-    description=(DOCS_PATH / "get_session_by_slug.md").read_text(),
+    description=(SESSION_DOCS_PATH / "get_session_by_slug.md").read_text(),
     summary=("Retrieves details of a specific saved session based on its slugname.",),
     response_model=DeviceSessionOut,
 )
@@ -85,7 +194,7 @@ def get_session_apps(
 
 @session_route.post(
     "/{session_slug}/clone",
-    description=(DOCS_PATH / "post_session_clone.md").read_text(),
+    description=(SESSION_DOCS_PATH / "post_session_clone.md").read_text(),
     summary=(
         "Creates a new session by cloning an existing saved session.",
         "If no session name is provided for the clone, a slugified name will be automatically generated.",
@@ -107,7 +216,7 @@ def clone_session_with_slugname(
 
 @session_route.delete(
     "/{session_slug}",
-    description=(DOCS_PATH / "delete_session_by_slug.md").read_text(),
+    description=(SESSION_DOCS_PATH / "delete_session_by_slug.md").read_text(),
     summary="Deletes a saved session based on its slugname.",
     status_code=status.HTTP_204_NO_CONTENT,
 )
@@ -122,7 +231,7 @@ def delete_session_by_slug(
 
 @session_route.post(
     "/{session_slug}/activate",
-    description=(DOCS_PATH / "post_session_activate.md").read_text(),
+    description=(SESSION_DOCS_PATH / "post_session_activate.md").read_text(),
     summary="Activates the selected saved session for the authenticated device.",
     response_model=DeviceSessionOut,
 )
@@ -137,7 +246,7 @@ def activate_sessin_by_slug(
 
 @session_route.post(
     "/{session_slug}/restore",
-    description=(DOCS_PATH / "post_session_restore.md").read_text(),
+    description=(SESSION_DOCS_PATH / "post_session_restore.md").read_text(),
     summary="Restores a saved session and optionally reopens applications according to the saved session state.",
     response_model=DeviceSessionWithReport,
 )

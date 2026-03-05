@@ -13,6 +13,7 @@ from ..schemas.device_resolution import (
 )
 from ..services import AuthService
 from pathlib import Path
+from app.config import setting
 
 auth_route = APIRouter(prefix="/auth", tags=["auth"])
 DOCS_PATH = Path(__file__).parent.parent.parent / "api_docs" / "auth"
@@ -41,6 +42,10 @@ def login_for_token_pair(
     response: Response,
     x_device_fingerprint: Annotated[str | None, Header(alias="X-Device-Fingerprint")] = None,
 ):
+    
+    if not x_device_fingerprint and setting.DEBUG:
+        x_device_fingerprint = form_data.client_id
+    
     result = AuthService(db).login_with_device_resolution(
         form_data.username,
         form_data.password,

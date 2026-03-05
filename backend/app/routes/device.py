@@ -7,11 +7,22 @@ import app.models as md
 from ..services import DeviceService
 from ..dependencies.database import get_db
 from ..dependencies.device import get_current_device
+from ..dependencies.user import get_current_user
 import app.utils.core as uc
 from pathlib import Path
 
 device_route = APIRouter(prefix="/device", tags=["device"])
 DOCS_PATH = Path(__file__).parent.parent.parent / "api_docs" / "device"
+
+@device_route.get(
+    "/",
+    summary="Retrieves the currently authenticated user's devices.",
+    response_model=list[DeviceOut],
+)
+async def get_me(
+    current_user: Annotated[md.User, Depends(get_current_user)],
+):
+    return current_user.devices
 
 @device_route.get(
     "/local",
