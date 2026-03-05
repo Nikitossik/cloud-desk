@@ -1,11 +1,13 @@
 from fastapi import APIRouter, Depends, status
 from typing import Annotated
-from ..models import User
-from ..dependencies import get_db, get_current_user
-from sqlalchemy.orm import Session
-from ..schemas.user import UserIn, UserUpdate, UserOut
-from ..services.user import UserService
 from pathlib import Path
+from sqlalchemy.orm import Session
+
+from ..models import User, Device
+from ..dependencies import get_db, get_current_user, get_current_device
+from ..schemas.user import UserIn, UserUpdate, UserOut
+from ..schemas.sidebar import UserSidebarOut
+from ..services.user import UserService
 
 user_route = APIRouter(prefix="/user", tags=["user"])
 
@@ -35,3 +37,11 @@ async def update_me(
     db: Annotated[Session, Depends(get_db)],
 ):
     return UserService(db).update(current_user.id, user_update)
+
+@user_route.get("/me/sidebar", summary="Retrieves the data needed to populate the user's sidebar.", response_model=UserSidebarOut)
+async def get_sidebar_data(
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+    current_device: Annotated[Device, Depends(get_current_device)],
+):
+    return UserService(db).get_sidebar_data(current_user, current_device)

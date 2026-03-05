@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, Header, Response, Cookie, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from typing import Annotated
+from pathlib import Path
+import uuid
 from ..dependencies import get_db, get_resolution_user_id
 from sqlalchemy.orm import Session
 from ..schemas.user import UserIn, UserOut
@@ -12,8 +14,7 @@ from ..schemas.device_resolution import (
     ResolveDeviceCancelIn,
 )
 from ..services import AuthService
-from pathlib import Path
-from app.config import setting
+from ..config import setting
 
 auth_route = APIRouter(prefix="/auth", tags=["auth"])
 DOCS_PATH = Path(__file__).parent.parent.parent / "api_docs" / "auth"
@@ -45,6 +46,8 @@ def login_for_token_pair(
     
     if not x_device_fingerprint and setting.DEBUG:
         x_device_fingerprint = form_data.client_id
+    elif setting.DEBUG:
+        x_device_fingerprint = str(uuid.uuid4())
     
     result = AuthService(db).login_with_device_resolution(
         form_data.username,

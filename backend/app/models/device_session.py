@@ -20,8 +20,8 @@ class DeviceSession(Base):
     id: so.Mapped[str] = so.mapped_column(
         sa.Uuid(), primary_key=True, default=uuid.uuid4
     )
-    name: so.Mapped[str] = so.mapped_column(sa.String(100), unique=True)
-    slugname: so.Mapped[str] = so.mapped_column(unique=True, index=True)
+    name: so.Mapped[str] = so.mapped_column(sa.String(100))
+    slugname: so.Mapped[str]
     description: so.Mapped[str | None]
     is_active: so.Mapped[bool] = so.mapped_column(sa.Boolean, default=True)
 
@@ -47,4 +47,9 @@ class DeviceSession(Base):
         "AppUsagePeriod",
         back_populates="session",
         cascade="all, delete-orphan",
+    )
+    
+    __table_args__ = (
+        sa.UniqueConstraint("device_id", "name", name="uq_device_name"),
+        sa.UniqueConstraint("device_id", "slugname", name="uq_device_slugname"),
     )

@@ -77,6 +77,20 @@ class AuthService:
         fingerprint: str | None,
     ) -> dict[str, Any]:
         user = self.authenticate_user(user_email, user_password)
+        user_devices = self.device_service.device_repo.get_by_user_id(user.id)
+        if not user_devices:
+            if not fingerprint:
+                return {
+                    "status": "device_resolution_required",
+                    "resolution_token": us.create_resolution_token({"sub": str(user.id)}),
+                }
+
+            self.device_service.create_or_get_device(user.id, fingerprint)
+            token_pair = self.create_token_pair(user=user)
+            return {
+                "status": "ok",
+                "token": token_pair,
+            }
 
         if not fingerprint:
             return {
