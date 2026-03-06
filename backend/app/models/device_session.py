@@ -18,7 +18,7 @@ class DeviceSession(Base):
     __tablename__ = "device_sessions"
 
     id: so.Mapped[str] = so.mapped_column(
-        sa.Uuid(), primary_key=True, default=uuid.uuid4
+        sa.Uuid(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4())
     )
     name: so.Mapped[str] = so.mapped_column(sa.String(100))
     slugname: so.Mapped[str]

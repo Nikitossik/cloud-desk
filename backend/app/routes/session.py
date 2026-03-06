@@ -53,91 +53,6 @@ def delete_all_sessions(
     device: Annotated[md.Device, Depends(d.get_current_device)],
 ):
     DeviceSessionService(db).delete_all_sessions(device)
-
-@session_route.get(
-    "/{session_id}",
-    description=(SESSION_DOCS_PATH / "get_session_by_slug.md").read_text(),
-    summary=("Retrieves details of a specific saved session based on its ID.",),
-    response_model=DeviceSessionOut,
-)
-def get_session_by_id(
-    *,
-    db: Annotated[so.Session, Depends(d.get_db)],
-    device: Annotated[md.Device, Depends(d.get_current_device)],
-    session_id: str,
-):
-    return DeviceSessionService(db).get_session_by_id(session_id, device)
-
-
-
-@session_route.post(
-    "/{session_id}/clone",
-    description=(SESSION_DOCS_PATH / "post_session_clone.md").read_text(),
-    summary=(
-        "Creates a new session by cloning an existing saved session.",
-        "If no session name is provided for the clone, a slugified name will be automatically generated.",
-    ),
-    status_code=status.HTTP_201_CREATED,
-    response_model=DeviceSessionOut,
-)
-def clone_session_by_id(
-    *,
-    db: Annotated[so.Session, Depends(d.get_db)],
-    device: Annotated[md.Device, Depends(d.get_current_device)],
-    session_id: str,
-    new_session: DeviceSessionIn,
-):
-    session = DeviceSessionService(db).get_session_by_id(session_id, device)
-    return DeviceSessionService(db).clone_session(
-        session, new_session, device
-    )
-
-
-@session_route.delete(
-    "/{session_id}",
-    summary="Deletes a saved session based on its ID.",
-    status_code=status.HTTP_204_NO_CONTENT,
-)
-def delete_session_by_id(
-    *,
-    db: Annotated[so.Session, Depends(d.get_db)],
-    device: Annotated[md.Device, Depends(d.get_current_device)],
-    session_id: str,
-):
-    session = DeviceSessionService(db).get_session_by_id(session_id, device)
-    DeviceSessionService(db).delete_session(session)
-
-
-@session_route.post(
-    "/{session_id}/start",
-    description=(SESSION_DOCS_PATH / "post_session_start.md").read_text(),
-    summary="Starts the selected saved session for the authenticated device.",
-    response_model=DeviceSessionOut,
-)
-def start_session_by_id(
-    *,
-    session_id: str,
-    device: Annotated[md.Device, Depends(d.get_current_device)],
-    db: Annotated[so.Session, Depends(d.get_db)],
-):
-    session = DeviceSessionService(db).get_session_by_id(session_id, device)
-    return DeviceSessionService(db).start_session(session, device)
-
-
-@session_route.post(
-    "/{session_id}/restore",
-    description=(SESSION_DOCS_PATH / "post_session_restore.md").read_text(),
-    summary="Restores a saved session and optionally reopens applications according to the saved session state.",
-    response_model=DeviceSessionWithReport,
-)
-def restore_session_by_id(
-    *,
-    db: Annotated[so.Session, Depends(d.get_db)],
-    device: Annotated[md.Device, Depends(d.get_current_device)],
-    session_id: str,
-):
-    session = DeviceSessionService(db).get_session_by_id(session_id, device)
-    return DeviceSessionService(db).restore_session(session, device)
     
 @session_route.get(
     "/active",
@@ -247,6 +162,92 @@ def restore_active_session(
     return DeviceSessionService(db).restore_session(
         active_session, device
     )
+
+@session_route.get(
+    "/{session_id}",
+    description=(SESSION_DOCS_PATH / "get_session_by_slug.md").read_text(),
+    summary=("Retrieves details of a specific saved session based on its ID.",),
+    response_model=DeviceSessionOut,
+)
+def get_session_by_id(
+    *,
+    db: Annotated[so.Session, Depends(d.get_db)],
+    device: Annotated[md.Device, Depends(d.get_current_device)],
+    session_id: str,
+):
+    return DeviceSessionService(db).get_session_by_id(session_id, device)
+
+
+
+@session_route.post(
+    "/{session_id}/clone",
+    description=(SESSION_DOCS_PATH / "post_session_clone.md").read_text(),
+    summary=(
+        "Creates a new session by cloning an existing saved session.",
+        "If no session name is provided for the clone, a slugified name will be automatically generated.",
+    ),
+    status_code=status.HTTP_201_CREATED,
+    response_model=DeviceSessionOut,
+)
+def clone_session_by_id(
+    *,
+    db: Annotated[so.Session, Depends(d.get_db)],
+    device: Annotated[md.Device, Depends(d.get_current_device)],
+    session_id: str,
+    new_session: DeviceSessionIn,
+):
+    session = DeviceSessionService(db).get_session_by_id(session_id, device)
+    return DeviceSessionService(db).clone_session(
+        session, new_session, device
+    )
+
+
+@session_route.delete(
+    "/{session_id}",
+    summary="Deletes a saved session based on its ID.",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def delete_session_by_id(
+    *,
+    db: Annotated[so.Session, Depends(d.get_db)],
+    device: Annotated[md.Device, Depends(d.get_current_device)],
+    session_id: str,
+):
+    session = DeviceSessionService(db).get_session_by_id(session_id, device)
+    DeviceSessionService(db).delete_session(session)
+
+
+@session_route.post(
+    "/{session_id}/start",
+    description=(SESSION_DOCS_PATH / "post_session_start.md").read_text(),
+    summary="Starts the selected saved session for the authenticated device.",
+    response_model=DeviceSessionOut,
+)
+def start_session_by_id(
+    *,
+    session_id: str,
+    device: Annotated[md.Device, Depends(d.get_current_device)],
+    db: Annotated[so.Session, Depends(d.get_db)],
+):
+    session = DeviceSessionService(db).get_session_by_id(session_id, device)
+    return DeviceSessionService(db).start_session(session, device)
+
+
+@session_route.post(
+    "/{session_id}/restore",
+    description=(SESSION_DOCS_PATH / "post_session_restore.md").read_text(),
+    summary="Restores a saved session and optionally reopens applications according to the saved session state.",
+    response_model=DeviceSessionWithReport,
+)
+def restore_session_by_id(
+    *,
+    db: Annotated[so.Session, Depends(d.get_db)],
+    device: Annotated[md.Device, Depends(d.get_current_device)],
+    session_id: str,
+):
+    session = DeviceSessionService(db).get_session_by_id(session_id, device)
+    return DeviceSessionService(db).restore_session(session, device)
+    
 
 
 @session_route.get(

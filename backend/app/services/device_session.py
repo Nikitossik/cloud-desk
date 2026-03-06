@@ -18,7 +18,7 @@ class DeviceSessionService:
     def get_session_by_id(
         self, session_id: str, device: Device
     ) -> DeviceSession:
-        session = self.device_session_repo.get(session_id, device)
+        session = self.device_session_repo.get(session_id)
 
         if not session:
             raise HTTPException(
@@ -85,8 +85,8 @@ class DeviceSessionService:
         return new_session
 
     def delete_session(self, session: DeviceSession):
-        SessionTracker.stop(session.id)
-        self.device_session_repo.delete_instance(session)
+        stopped_session = self.stop_session(session)
+        self.device_session_repo.delete_instance(stopped_session)
 
     def start_session(self, session: DeviceSession, device: Device) -> DeviceSession:
         if session.is_active:
