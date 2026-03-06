@@ -36,7 +36,6 @@ export function SessionsNavGroup({ onAddSession }) {
           <Tooltip>
             <TooltipTrigger asChild>
               <SidebarMenuAction
-                showOnHover
                 aria-label="Add session"
                 onClick={(event) => {
                   event.preventDefault()
