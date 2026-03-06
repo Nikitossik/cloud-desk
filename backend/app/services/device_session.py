@@ -14,6 +14,43 @@ class DeviceSessionService:
     def __init__(self, db: Session):
         self.device_session_repo: DeviceSessionRepository = DeviceSessionRepository(db)
         self.app_usage_repo: AppUsageRepository = AppUsageRepository(db)
+        
+    def get_session_by_id(
+        self, session_id: str, device: Device
+    ) -> DeviceSession:
+        session = self.device_session_repo.get(session_id, device)
+
+        if not session:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Session with the given ID was not found",
+            )
+
+        return session    
+    
+    def get_session_by_slugname(
+        self, session_slug: str, device: Device
+    ) -> DeviceSession:
+        session = self.device_session_repo.get_by_slugname(session_slug, device)
+
+        if not session:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Session with the given name was not found",
+            )
+
+        return session
+    
+    def get_active_session(self, device: Device) -> DeviceSession:
+        session = self.device_session_repo.get_active_session(device)
+
+        if not session:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No active sessions at the moment",
+            )
+
+        return session
     
     def get_application_usage(self, session: DeviceSession, device: Device) -> dict[str, Any]:
         usage_data = self.device_session_repo.get_application_usage(session, device)
@@ -133,58 +170,13 @@ class DeviceSessionService:
             report=restore_report
         )
 
-    def delete_session_by_slugname(self, session_slug: str, device: Device):
-        session = self.get_session_by_slugname(session_slug, device)
-
-        self.delete_session(session)
-
-    def clone_session_by_slugname(
-        self, session_slug: str, device_session: DeviceSessionIn, device: Device
+    def clone_session(
+        self, original_session: DeviceSession, new_session: DeviceSessionIn, device: Device
     ) -> DeviceSession:
-        original_session = self.get_session_by_slugname(session_slug, device)
-        session_clone = self.create_session(device_session, device)
+        session_clone = self.create_session(new_session, device)
 
         return self.device_session_repo.clone_state(original_session, session_clone)
-
-    def get_active_session(self, device: Device) -> DeviceSession:
-        session = self.device_session_repo.get_active_session(device)
-
-        if not session:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="No active sessions at the moment",
-            )
-
-        return session
-
-    def get_session_by_slugname(
-        self, session_slug: str, device: Device
-    ) -> DeviceSession:
-        session = self.device_session_repo.get_by_slugname(session_slug, device)
-
-        if not session:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Session with the given name was not found",
-            )
-
-        return session
 
     def delete_all_sessions(self, device: Device):
         for session in device.sessions:
             self.delete_session(session)
-
-    def start_session_by_slug(
-        self, session_slug: str, device: Device
-    ) -> DeviceSession:
-        session = self.get_session_by_slugname(session_slug, device)
-        started_session = self.start_session(session, device)
-
-        return started_session
-
-    def restore_session_by_slug(
-        self, session_slug: str, device: Device
-    ) -> DeviceSessionWithReport:
-        session_to_restore = self.get_session_by_slugname(session_slug, device)
-
-        return self.restore_session(session_to_restore, device)
