@@ -3,8 +3,9 @@ from fastapi import HTTPException, status
 from .session_tracker import SessionTracker
 from ..models import Device, DeviceSession
 from ..repositories import DeviceSessionRepository, AppUsageRepository
-from ..schemas.device_session import DeviceSessionIn, DeviceSessionWithReport, DeviceSessionOut
+from ..schemas.device_session import DeviceSessionIn, DeviceSessionUpdate, DeviceSessionWithReport, DeviceSessionOut
 from ..schemas.application import ApplicationBase   
+from ..utils.naming import generate_name_and_slug
 import app.utils.core as uc
 from datetime import datetime, timezone
 import time
@@ -60,18 +61,17 @@ class DeviceSessionService:
     def create_session(
         self, device_session: DeviceSessionIn, device: Device
     ) -> DeviceSession:
-        session_data = device_session.model_dump()
+        session_data = device_session.model_dump(exclude_unset=True)
 
         session_data["device_id"] = device.id
-        session_data["is_active"] = session_data["start"]
+        session_data["is_active"] = session_data.pop("start")
 
         if session_data["is_active"]:
             self.stop_last_active_session(device)
+        
+        session_data["name"], session_data["slugname"] = generate_name_and_slug(session_data.get("name"))
 
-        found_session = self.device_session_repo.get_by_slugname(
-            session_data["slugname"], device
-        )
-
+        found_session = self.device_session_repo.get_by_slugname(session_data["slugname"], device)
         if found_session:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
@@ -80,9 +80,27 @@ class DeviceSessionService:
 
         new_session = self.device_session_repo.create(session_data)
 
-        SessionTracker.start(new_session.id)
+        if new_session.is_active:
+            SessionTracker.start(new_session.id)
 
         return new_session
+    
+    def update_session(self, session: DeviceSession, session_update: DeviceSessionUpdate, device: Device) -> DeviceSession:
+        session_data = session_update.model_dump(exclude_unset=True)
+        
+        if session_data.get("name"):
+            session_data["name"], session_data["slugname"] = generate_name_and_slug(session_data.get("name"))
+            found_session = self.device_session_repo.get_by_slugname(session_data["slugname"], device)
+            
+            if found_session and found_session.id != session.id:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Session with the given name already exists",
+                )
+            
+        updated_session = self.device_session_repo.update(session, session_data)
+
+        return updated_session
 
     def delete_session(self, session: DeviceSession):
         stopped_session = self.stop_session(session)

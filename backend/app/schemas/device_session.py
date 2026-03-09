@@ -2,8 +2,7 @@ from pydantic import BaseModel, ConfigDict, model_validator, Field
 import datetime
 from typing_extensions import Self
 from typing import Any
-from coolname import generate_slug
-from slugify import slugify
+
 
 class DeviceSessionBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -15,11 +14,6 @@ class DeviceSessionBase(BaseModel):
     description: str | None = Field(
         default=None, description="Description of the session. Can be null."
     )
-    slugname: str | None = Field(
-        default=None,
-        description="Slugified version of the session name used for URLs and identifiers.",
-    )
-
 
 class DeviceSessionIn(DeviceSessionBase):
     start: bool = Field(
@@ -27,17 +21,15 @@ class DeviceSessionIn(DeviceSessionBase):
         description="Flag indicating if the session should be started upon creation.",
     )
 
-    @model_validator(mode="after")
-    def check_session_name(self) -> Self:
-        if not self.name or len(self.name.strip()) == 0:
-            slugname = generate_slug(3)
-            self.name = slugname
-            self.slugname = slugname
-        else:
-            self.slugname = slugify(self.name, max_length=150, word_boundary=True)
-        return self
+class DeviceSessionUpdate(DeviceSessionBase):
+    pass
         
 class DeviceSessionOut(DeviceSessionBase):
+    id: str = Field(description="Unique identifier for the session.")
+    slugname: str = Field(
+        default=None,
+        description="Slugified version of the session name used for URLs and identifiers.",
+    )
     is_active: bool = Field(
         default=True, description="Flag indicating if the session is currently active."
     )

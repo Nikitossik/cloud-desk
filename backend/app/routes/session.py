@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, status
 import sqlalchemy.orm as so
-from ..schemas.device_session import DeviceSessionIn, DeviceSessionOut, DeviceSessionWithReport
+from ..schemas.device_session import DeviceSessionIn, DeviceSessionOut, DeviceSessionUpdate, DeviceSessionWithReport
 from ..schemas.application import FullApplicationOut
 import app.models as md
 import app.dependencies as d
-from ..services import DeviceSessionService
+from ..services import DeviceSessionService, DeviceService
 from typing import Annotated
 from pathlib import Path
 
@@ -72,6 +72,18 @@ def get_active_session(
 ):
     return active_session
 
+@session_route.patch(
+    "/active",
+    response_model=DeviceSessionOut,
+)
+def update_active_session(
+    *,
+    db: Annotated[so.Session, Depends(d.get_db)],
+    device_update: DeviceSessionUpdate,
+    device: Annotated[md.Device, Depends(d.get_current_device)],
+    active_session: Annotated[md.DeviceSession, Depends(d.get_active_session)],
+):
+    return DeviceSessionService(db).update_session(active_session, device_update, device)
 
 @session_route.delete(
     "/active",
@@ -142,7 +154,7 @@ def stop_active_session(
     active_session: Annotated[md.DeviceSession, Depends(d.get_active_session)]
 ):
     DeviceService(db).sync_applications(device)
-    return DeviceSessionService(db).stop_session(active_session, save_usage)
+    return DeviceSessionService(db).stop_session(active_session)
 
 
 @session_route.post(
@@ -177,6 +189,19 @@ def get_session_by_id(
 ):
     return DeviceSessionService(db).get_session_by_id(session_id, device)
 
+@session_route.patch(
+    "/{session_id}",
+    response_model=DeviceSessionOut,
+)
+def update_session_by_id(
+    *,
+    db: Annotated[so.Session, Depends(d.get_db)],
+    device_update: DeviceSessionUpdate,
+    device: Annotated[md.Device, Depends(d.get_current_device)],
+    session_id: str,
+):
+    session = DeviceSessionService(db).get_session_by_id(session_id, device)
+    return DeviceSessionService(db).update_session(session, device_update, device)
 
 
 @session_route.post(
@@ -264,6 +289,20 @@ def get_session_by_slug(
 ):
     return DeviceSessionService(db).get_session_by_slugname(session_slug, device)
 
+@session_route.patch(
+    "/by-slug/{session_slug}",
+    response_model=DeviceSessionOut,
+)
+def update_session_by_slug(
+    *,
+    db: Annotated[so.Session, Depends(d.get_db)],
+    device_update: DeviceSessionUpdate,
+    device: Annotated[md.Device, Depends(d.get_current_device)],
+    session_slug: str,
+):
+    session = DeviceSessionService(db).get_session_by_slugname(session_slug, device)
+    return DeviceSessionService(db).update_session(session, device_update, device)
+
 
 @session_route.get(
     "/by-slug/{session_slug}/apps",
@@ -275,7 +314,8 @@ def get_session_apps(
     device: Annotated[md.Device, Depends(d.get_current_device)],
     session_slug: str,
 ):
-    return DeviceSessionService(db).get_application_usage(session_slug, device)
+    session = DeviceSessionService(db).get_session_by_slugname(session_slug, device)
+    return DeviceSessionService(db).get_application_usage(session, device)
 
 
 @session_route.post(
