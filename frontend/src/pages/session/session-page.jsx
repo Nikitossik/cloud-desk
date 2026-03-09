@@ -85,75 +85,78 @@ export function SessionPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-      <div className="flex items-start justify-between gap-4">
+      <div className="space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight">
           {session.name}
         </h1>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="gap-2">
-              <Ellipsis className="size-4" />
-              Actions
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem>
-              {isActive ? <Pause /> : <Play />}
-              {isActive ? "Stop" : "Start"}
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <RotateCcw />
-              Restore
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={(event) => {
-                event.preventDefault()
-                setIsEditDialogOpen(true)
-              }}
-            >
-              <Pencil />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Copy />
-              Clone
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              variant="destructive"
-              disabled={deleteSessionMutation.isPending}
-              onClick={(event) => {
-                event.preventDefault()
-                deleteSessionMutation.mutate({
-                  isActive: session.is_active,
-                  sessionId: session.id,
-                })
-              }}
-            >
-              <Trash2 />
-              {deleteSessionMutation.isPending ? "Deleting..." : "Move to Trash"}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {session.description ? (
+          <p className="text-muted-foreground max-w-3xl leading-relaxed">
+            {session.description}
+          </p>
+        ) : null}
       </div>
 
       {deleteError ? <p className="text-destructive text-sm">{String(deleteError)}</p> : null}
 
-      <div>
+      <div className="flex items-start justify-between gap-4">
         <Badge variant="outline" className="gap-2 px-3 py-1 text-sm">
           <span className={`size-2 rounded-full ${isActive ? "bg-green-500" : "bg-zinc-500"}`} />
           {statusText}
           <span className="text-muted-foreground">•</span>
           <span>Created at {createdAtText}</span>
         </Badge>
-      </div>
 
-      {session.description ? (
-        <p className="text-muted-foreground max-w-3xl leading-relaxed">
-          {session.description}
-        </p>
-      ) : null}
+        <div className="flex items-center gap-2">
+          <Button className="gap-2">
+            {isActive ? <Pause className="size-4" /> : <Play className="size-4" />}
+            {isActive ? "Stop" : "Start"}
+          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <Ellipsis className="size-4" />
+                Actions
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem>
+                <RotateCcw />
+                Restore
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={(event) => {
+                  event.preventDefault()
+                  setIsEditDialogOpen(true)
+                }}
+              >
+                <Pencil />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Copy />
+                Clone
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                variant="destructive"
+                disabled={deleteSessionMutation.isPending}
+                onClick={(event) => {
+                  event.preventDefault()
+                  deleteSessionMutation.mutate({
+                    isActive: session.is_active,
+                    sessionId: session.id,
+                  })
+                }}
+              >
+                <Trash2 />
+                {deleteSessionMutation.isPending ? "Deleting..." : "Move to Trash"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
 
       <section className="bg-card text-card-foreground rounded-xl border p-4">
         <h2 className="text-xl font-semibold">Applications</h2>
