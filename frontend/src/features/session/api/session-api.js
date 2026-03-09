@@ -7,17 +7,39 @@ export async function getSessionBySlugRequest(sessionSlug) {
 
 export async function createSessionRequest({ name, description, start }) {
   const payload = {
+    name,
+    description,
     start,
-  }
-
-  if (typeof name === "string" && name.trim()) {
-    payload.name = name.trim()
-  }
-
-  if (typeof description === "string" && description.trim()) {
-    payload.description = description.trim()
   }
 
   const { data } = await http.post("/session", payload)
   return data
+}
+
+export async function updateActiveSessionRequest({ name, description }) {
+  const payload = {
+    name,
+    description,
+  }
+
+  const { data } = await http.patch("/session/active", payload)
+  return data
+}
+
+export async function updateSessionByIdRequest(sessionId, { name, description }) {
+  const payload = {
+    name,
+    description,
+  }
+
+  const { data } = await http.patch(`/session/${sessionId}`, payload)
+  return data
+}
+
+export async function deleteActiveSessionRequest() {
+  await http.delete("/session/active")
+}
+
+export async function deleteSessionByIdRequest(sessionId) {
+  await http.delete(`/session/${sessionId}`)
 }

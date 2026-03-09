@@ -17,7 +17,7 @@ import { SessionPage } from "@/pages/session/session-page"
 import { StatisticsPage } from "@/pages/statistics/statistics-page"
 import { TrashPage } from "@/pages/trash/trash-page"
 import { AuthPage } from "@/features/auth/pages/auth-page"
-import { CreateSessionDialog } from "@/features/session/components/create-session-dialog"
+import { SessionDialog } from "@/features/session/components/session-dialog"
 
 export default function App() {
   const { pathname } = useLocation()
@@ -72,9 +72,10 @@ export default function App() {
           <Route path="/trash" element={<TrashPage />} />
         </Routes>
       </SidebarInset>
-      <CreateSessionDialog
+      <SessionDialog
         open={isAddSessionOpen}
         onOpenChange={setIsAddSessionOpen}
+        mode="create"
       />
     </SidebarProvider>
   )
