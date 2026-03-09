@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useForm } from "@tanstack/react-form"
+import { useNavigate } from "react-router"
 import { z } from "zod"
 import {
   createSessionRequest,
@@ -35,6 +36,7 @@ export function SessionDialog({
   session,
   sessionSlug,
 }) {
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const isEditMode = mode === "edit"
 
@@ -73,19 +75,73 @@ export function SessionDialog({
     onSubmit: async ({ value }) => {
       const response = await mutation.mutateAsync(value)
 
-      await queryClient.invalidateQueries({ queryKey: USER_SIDEBAR_QUERY_KEY })
-
       if (isEditMode) {
+        const previousSlug = sessionSlug || session?.slugname || ""
+        const nextSlug = response?.slugname || previousSlug
+
+        if (previousSlug) {
+          queryClient.setQueryData(
+            SESSION_BY_SLUG_QUERY_KEY(previousSlug),
+            (current) => ({ ...(current || {}), ...response }),
+          )
+        }
+
+        if (nextSlug && nextSlug !== previousSlug) {
+          queryClient.setQueryData(
+            SESSION_BY_SLUG_QUERY_KEY(nextSlug),
+            (current) => ({ ...(current || {}), ...response }),
+          )
+        }
+
+        queryClient.setQueryData(USER_SIDEBAR_QUERY_KEY, (current) => {
+          if (!current || !Array.isArray(current.sessions)) {
+            return current
+          }
+
+          return {
+            ...current,
+            sessions: current.sessions.map((item) => {
+              const itemSlug = item.slugname || item.slug
+              const isTarget =
+                (session?.id && item.id && item.id === session.id) ||
+                (previousSlug && itemSlug === previousSlug)
+
+              if (!isTarget) {
+                return item
+              }
+
+              return {
+                ...item,
+                name: response?.name ?? item.name,
+                slugname: response?.slugname ?? item.slugname,
+                slug: response?.slugname ?? item.slug,
+                is_active:
+                  typeof response?.is_active === "boolean"
+                    ? response.is_active
+                    : item.is_active,
+              }
+            }),
+          }
+        })
+
+        if (nextSlug && previousSlug && nextSlug !== previousSlug) {
+          navigate(`/session/${nextSlug}`, { replace: true })
+        }
+
         if (sessionSlug) {
-          await queryClient.invalidateQueries({
+          queryClient.invalidateQueries({
             queryKey: SESSION_BY_SLUG_QUERY_KEY(sessionSlug),
           })
         }
         if (response?.slugname) {
-          await queryClient.invalidateQueries({
+          queryClient.invalidateQueries({
             queryKey: SESSION_BY_SLUG_QUERY_KEY(response.slugname),
           })
         }
+
+        queryClient.invalidateQueries({ queryKey: USER_SIDEBAR_QUERY_KEY })
+      } else {
+        queryClient.invalidateQueries({ queryKey: USER_SIDEBAR_QUERY_KEY })
       }
 
       mutation.reset()

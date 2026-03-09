@@ -43,3 +43,23 @@ export async function deleteActiveSessionRequest() {
 export async function deleteSessionByIdRequest(sessionId) {
   await http.delete(`/session/${sessionId}`)
 }
+
+export async function startSessionByIdRequest(sessionId) {
+  const { data } = await http.post(`/session/${sessionId}/start`)
+  return data
+}
+
+export async function stopActiveSessionRequest() {
+  const { data } = await http.post("/session/active/stop")
+  return data
+}
+
+export async function restoreActiveSessionRequest() {
+  const { data } = await http.post("/session/active/restore")
+  return data
+}
+
+export async function restoreSessionByIdRequest(sessionId) {
+  const { data } = await http.post(`/session/${sessionId}/restore`)
+  return data
+}

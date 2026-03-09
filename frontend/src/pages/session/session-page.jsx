@@ -1,20 +1,23 @@
 import { useNavigate, useParams } from "react-router"
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import {
-  Copy,
-  Pause,
   Pencil,
   Play,
   RotateCcw,
   Trash2,
   Ellipsis,
 } from "lucide-react"
+import { FaPause } from "react-icons/fa"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   deleteActiveSessionRequest,
   deleteSessionByIdRequest,
+  restoreActiveSessionRequest,
+  restoreSessionByIdRequest,
+  startSessionByIdRequest,
+  stopActiveSessionRequest,
 } from "@/features/session/api/session-api"
 import { SESSION_BY_SLUG_QUERY_KEY } from "@/features/session/lib/query-keys"
 import { USER_SIDEBAR_QUERY_KEY } from "@/features/user/lib/query-keys"
@@ -34,6 +37,7 @@ export function SessionPage() {
   const queryClient = useQueryClient()
   const { session_slug = "" } = useParams()
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const shouldStopActiveRef = useRef(false)
   const {
     data: session,
     isLoading,
@@ -59,6 +63,43 @@ export function SessionPage() {
   const deleteError =
     deleteSessionMutation.error?.response?.data?.detail ||
     deleteSessionMutation.error?.message ||
+    ""
+
+  const sessionActionMutation = useMutation({
+    mutationFn: async ({ action, isActive, sessionId }) => {
+      if (action === "start") {
+        const data = await startSessionByIdRequest(sessionId)
+        shouldStopActiveRef.current = true
+        return data
+      }
+
+      if (action === "stop") {
+        const mustUseActiveStop = Boolean(isActive) || shouldStopActiveRef.current
+        const data = mustUseActiveStop
+          ? await stopActiveSessionRequest()
+          : null
+
+        shouldStopActiveRef.current = false
+        return data
+      }
+
+      if (action === "restore") {
+        return isActive
+          ? restoreActiveSessionRequest()
+          : restoreSessionByIdRequest(sessionId)
+      }
+
+      return null
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: USER_SIDEBAR_QUERY_KEY })
+      queryClient.invalidateQueries({ queryKey: SESSION_BY_SLUG_QUERY_KEY(session_slug) })
+    },
+  })
+
+  const actionError =
+    sessionActionMutation.error?.response?.data?.detail ||
+    sessionActionMutation.error?.message ||
     ""
 
   if (isLoading) {
@@ -97,19 +138,49 @@ export function SessionPage() {
         ) : null}
       </div>
 
-      {deleteError ? <p className="text-destructive text-sm">{String(deleteError)}</p> : null}
+      {deleteError ? (
+        <p className="text-destructive text-sm">{String(deleteError)}</p>
+      ) : null}
+      {actionError ? (
+        <p className="text-destructive text-sm">{String(actionError)}</p>
+      ) : null}
 
       <div className="flex items-start justify-between gap-4">
         <Badge variant="outline" className="gap-2 px-3 py-1 text-sm">
-          <span className={`size-2 rounded-full ${isActive ? "bg-green-500" : "bg-zinc-500"}`} />
+          <span
+            className={`size-2 rounded-full ${isActive ? "bg-green-500" : "bg-zinc-500"}`}
+          />
           {statusText}
           <span className="text-muted-foreground">•</span>
           <span>Created at {createdAtText}</span>
         </Badge>
 
         <div className="flex items-center gap-2">
-          <Button className="gap-2">
-            {isActive ? <Pause className="size-4" /> : <Play className="size-4" />}
+          <Button
+            className="gap-2"
+            disabled={sessionActionMutation.isPending}
+            onClick={() => {
+              if (isActive || shouldStopActiveRef.current) {
+                sessionActionMutation.mutate({
+                  action: "stop",
+                  isActive,
+                  sessionId: session.id,
+                })
+                return
+              }
+
+              sessionActionMutation.mutate({
+                action: "start",
+                isActive,
+                sessionId: session.id,
+              })
+            }}
+          >
+            {isActive ? (
+              <FaPause className="size-3" />
+            ) : (
+              <Play className="size-3" />
+            )}
             {isActive ? "Stop" : "Start"}
           </Button>
 
@@ -121,37 +192,45 @@ export function SessionPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={sessionActionMutation.isPending}
+                onClick={(event) => {
+                  event.preventDefault()
+                  sessionActionMutation.mutate({
+                    action: "restore",
+                    isActive,
+                    sessionId: session.id,
+                  })
+                }}
+              >
                 <RotateCcw />
                 Restore
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={(event) => {
-                  event.preventDefault()
-                  setIsEditDialogOpen(true)
+                  event.preventDefault();
+                  setIsEditDialogOpen(true);
                 }}
               >
                 <Pencil />
                 Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Copy />
-                Clone
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 variant="destructive"
                 disabled={deleteSessionMutation.isPending}
                 onClick={(event) => {
-                  event.preventDefault()
+                  event.preventDefault();
                   deleteSessionMutation.mutate({
                     isActive: session.is_active,
                     sessionId: session.id,
-                  })
+                  });
                 }}
               >
                 <Trash2 />
-                {deleteSessionMutation.isPending ? "Deleting..." : "Move to Trash"}
+                {deleteSessionMutation.isPending
+                  ? "Deleting..."
+                  : "Move to Trash"}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
