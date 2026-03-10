@@ -2,6 +2,7 @@ import uvicorn
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.database import engine, Base
 from app.models import (
@@ -14,7 +15,7 @@ from app.models import (
 )
 import app.routes as r
 from api_docs.app_docs import APP_DOCS
-from app.config import setting
+from app.config import setting, BASE_DIR
 from app.utils.lifespan import lifespan
 
 app = FastAPI(**APP_DOCS, lifespan=lifespan)
@@ -31,6 +32,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+STATIC_DIR = BASE_DIR / "static"
+STATIC_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 Base.metadata.create_all(bind=engine)

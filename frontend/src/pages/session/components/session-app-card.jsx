@@ -1,5 +1,5 @@
-import { AppWindow } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { SessionAppIcon } from "@/pages/session/components/session-app-icon"
 
 function formatAppDisplayName(name) {
   const baseName = typeof name === "string"
@@ -16,12 +16,13 @@ function formatAppDisplayName(name) {
 export function SessionAppCard({ app }) {
   const isOpened = Boolean(app?.is_active)
   const appName = formatAppDisplayName(app?.name)
+  const appId = app?.app_id
 
   return (
     <div className="bg-background rounded-lg border p-3">
       <div className="flex items-start gap-3">
         <div className="bg-muted rounded-md p-2">
-          <AppWindow className="text-muted-foreground size-4" />
+          <SessionAppIcon appId={appId} appName={appName} />
         </div>
 
         <div className="min-w-0 flex-1 space-y-2">

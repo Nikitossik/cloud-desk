@@ -1,6 +1,8 @@
 from ..repositories import DeviceRepository, ApplicationRepository
 from sqlalchemy.orm import Session
 import app.utils.core as uc
+import app.utils.icons as ui
+from pathlib import Path
 from ..models import Device, Application
 from ..schemas.device import DeviceUpdate
 from typing import Any
@@ -84,9 +86,27 @@ class DeviceService:
             )
 
             if not found_app:
-                self.application_repo.create({**app, "device_id": device.id})
+                new_app = self.application_repo.create({**app, "device_id": device.id})
+                icon_key = ui.save_application_icon(new_app.id, app.get("exe"))
+                if icon_key:
+                    self.application_repo.update(new_app, {"icon_key": icon_key})
 
         return device.apps
+
+    def get_application_icon_path(self, app_id: str, device: Device) -> Path:
+        app = self.application_repo.get_by_device_and_id(app_id, device.id)
+
+        if not app:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Application not found")
+
+        if not app.icon_key:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Icon not found")
+
+        icon_path = ui.get_app_icon_abs_path(app.icon_key)
+        if not icon_path.exists():
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Icon not found")
+
+        return icon_path
     
     def delete(self, device_id: str):
         device = self.device_repo.get(device_id)

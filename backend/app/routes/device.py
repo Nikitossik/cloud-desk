@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, status
+from fastapi.responses import FileResponse
 import sqlalchemy.orm as so
 from typing import Annotated
 from ..schemas.device import DeviceOut, DeviceUpdate, DeviceBase
@@ -10,6 +11,7 @@ from ..dependencies.device import get_current_device
 from ..dependencies.user import get_current_user
 import app.utils.core as uc
 from pathlib import Path
+from uuid import UUID
 
 device_route = APIRouter(prefix="/device", tags=["device"])
 DOCS_PATH = Path(__file__).parent.parent.parent / "api_docs" / "device"
@@ -79,3 +81,16 @@ def get_device_apps(
     current_device: Annotated[md.Device, Depends(get_current_device)],
 ):
     return current_device.apps
+
+
+@device_route.get(
+    "/apps/{app_id}/icon",
+    summary="Returns application icon file by application id for current device.",
+)
+def get_application_icon(
+    app_id: UUID,
+    db: Annotated[so.Session, Depends(get_db)],
+    current_device: Annotated[md.Device, Depends(get_current_device)],
+):
+    icon_path = DeviceService(db).get_application_icon_path(app_id, current_device)
+    return FileResponse(path=icon_path, media_type="image/png")

@@ -20,6 +20,7 @@ class Application(Base):
     name: so.Mapped[str]
     exe: so.Mapped[str]
     cmdline: so.Mapped[str | None]
+    icon_key: so.Mapped[str | None]
 
     device_id: so.Mapped[str] = so.mapped_column(sa.ForeignKey("devices.id"))
 
