@@ -10,6 +10,7 @@ import app.utils.core as uc
 from datetime import datetime, timezone
 import time
 from typing import Any
+from uuid import UUID
 
 class DeviceSessionService:
     def __init__(self, db: Session):
@@ -17,7 +18,7 @@ class DeviceSessionService:
         self.app_usage_repo: AppUsageRepository = AppUsageRepository(db)
         
     def get_session_by_id(
-        self, session_id: str, device: Device
+        self, session_id: UUID, device: Device
     ) -> DeviceSession:
         session = self.device_session_repo.get(session_id)
 

@@ -2,6 +2,7 @@ from pydantic import BaseModel, ConfigDict, model_validator, Field
 import datetime
 from typing_extensions import Self
 from typing import Any
+from uuid import UUID
 
 
 class DeviceSessionBase(BaseModel):
@@ -25,7 +26,7 @@ class DeviceSessionUpdate(DeviceSessionBase):
     pass
         
 class DeviceSessionOut(DeviceSessionBase):
-    id: str = Field(description="Unique identifier for the session.")
+    id: UUID = Field(description="Unique identifier for the session.")
     slugname: str = Field(
         default=None,
         description="Slugified version of the session name used for URLs and identifiers.",

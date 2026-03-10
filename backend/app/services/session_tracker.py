@@ -5,13 +5,14 @@ from ..database import SessionLocal
 from ..repositories import DeviceSessionRepository, AppUsageRepository
 from ..services.device import DeviceService
 from datetime import datetime
+from uuid import UUID
 
 class SessionTracker:
     lock = threading.RLock()
     thread: threading.Thread | None = None
     stop_event: threading.Event | None = None
     usage_data: dict[str, Any] = {}
-    session_id: str | None = None
+    session_id: UUID | None = None
 
     @staticmethod
     def is_running() -> bool:
@@ -139,7 +140,7 @@ class SessionTracker:
         print(f"[SessionTracker] loop stopped session_id={SessionTracker.session_id}")
 
     @staticmethod
-    def set(session_id: str):
+    def set(session_id: UUID):
         with SessionTracker.lock:
             SessionTracker.session_id = session_id
             SessionTracker.usage_data = core.get_running_applications()
@@ -154,7 +155,7 @@ class SessionTracker:
 
 
     @staticmethod
-    def get(session_id: str) -> dict[str, Any] | None:
+    def get(session_id: UUID) -> dict[str, Any] | None:
         if SessionTracker.session_id != session_id:
             return None
 
@@ -168,7 +169,7 @@ class SessionTracker:
         }
 
     @staticmethod
-    def start(session_id: str):
+    def start(session_id: UUID):
         with SessionTracker.lock:
             if SessionTracker.is_running() and SessionTracker.session_id == session_id:
                 print(f"[SessionTracker] already running session_id={session_id}")
@@ -192,7 +193,7 @@ class SessionTracker:
             print(f"[SessionTracker] thread started session_id={session_id}")
 
     @staticmethod
-    def stop(session_id: str | None) -> dict[str, Any] | None:
+    def stop(session_id: UUID | None) -> dict[str, Any] | None:
         with SessionTracker.lock:
             if SessionTracker.session_id is None:
                 print("[SessionTracker] stop ignored: no active tracker")

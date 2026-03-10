@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Any
 from ..database import Base
-
+from uuid import UUID
 
 class BaseRepository:
     model: Base
@@ -14,7 +14,7 @@ class BaseRepository:
     def db(self):
         return self._db
 
-    def get(self, id: int | str) -> Base:
+    def get(self, id: int | str | UUID) -> Base:
         return self.db.query(self.model).filter(self.model.id == id).first()
 
     def get_multiple(self) -> list[Base]:
@@ -45,7 +45,7 @@ class BaseRepository:
         self.db.refresh(db_model)
         return db_model
 
-    def delete(self, id) -> Base:
+    def delete(self, id: int | str | UUID) -> Base:
         obj = self.db.query(self.model).get(id)
         self.db.delete(obj)
         self.db.commit()

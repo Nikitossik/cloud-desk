@@ -65,7 +65,7 @@ def update_device(
 )
 def delete_device(
     db: Annotated[so.Session, Depends(get_db)],
-    device_id: str,
+    device_id: UUID,
 ):
     DeviceService(db).delete(device_id)
 

@@ -7,6 +7,7 @@ import app.dependencies as d
 from ..services import DeviceSessionService, DeviceService
 from typing import Annotated
 from pathlib import Path
+from uuid import UUID
 
 session_route = APIRouter(prefix="/session", tags=["session"])
 SESSION_DOCS_PATH = Path(__file__).parent.parent.parent / "api_docs" / "session"
@@ -185,7 +186,7 @@ def get_session_by_id(
     *,
     db: Annotated[so.Session, Depends(d.get_db)],
     device: Annotated[md.Device, Depends(d.get_current_device)],
-    session_id: str,
+    session_id: UUID,
 ):
     return DeviceSessionService(db).get_session_by_id(session_id, device)
 
@@ -198,7 +199,7 @@ def update_session_by_id(
     db: Annotated[so.Session, Depends(d.get_db)],
     device_update: DeviceSessionUpdate,
     device: Annotated[md.Device, Depends(d.get_current_device)],
-    session_id: str,
+    session_id: UUID,
 ):
     session = DeviceSessionService(db).get_session_by_id(session_id, device)
     return DeviceSessionService(db).update_session(session, device_update, device)
@@ -218,7 +219,7 @@ def clone_session_by_id(
     *,
     db: Annotated[so.Session, Depends(d.get_db)],
     device: Annotated[md.Device, Depends(d.get_current_device)],
-    session_id: str,
+    session_id: UUID,
     new_session: DeviceSessionIn,
 ):
     session = DeviceSessionService(db).get_session_by_id(session_id, device)
@@ -236,7 +237,7 @@ def delete_session_by_id(
     *,
     db: Annotated[so.Session, Depends(d.get_db)],
     device: Annotated[md.Device, Depends(d.get_current_device)],
-    session_id: str,
+    session_id: UUID,
 ):
     session = DeviceSessionService(db).get_session_by_id(session_id, device)
     DeviceSessionService(db).delete_session(session)
@@ -250,7 +251,7 @@ def delete_session_by_id(
 )
 def start_session_by_id(
     *,
-    session_id: str,
+    session_id: UUID,
     device: Annotated[md.Device, Depends(d.get_current_device)],
     db: Annotated[so.Session, Depends(d.get_db)],
 ):
@@ -268,7 +269,7 @@ def restore_session_by_id(
     *,
     db: Annotated[so.Session, Depends(d.get_db)],
     device: Annotated[md.Device, Depends(d.get_current_device)],
-    session_id: str,
+    session_id: UUID,
 ):
     session = DeviceSessionService(db).get_session_by_id(session_id, device)
     return DeviceSessionService(db).restore_session(session, device)

@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
-
+from uuid import UUID
 class DeviceBase(BaseModel):
     model_config = ConfigDict(
         from_attributes=True,
@@ -53,7 +53,7 @@ class DeviceBaseExtended(DeviceBase):
         },
     )
 
-    id: str = Field(description="Unique identifier for the device.")
+    id: UUID = Field(description="Unique identifier for the device.")
     fingerprint: str = Field(
         description="A unique fingerprint for the device, used to identify it across sessions."
     )

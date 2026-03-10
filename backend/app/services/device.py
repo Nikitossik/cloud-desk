@@ -8,6 +8,7 @@ from ..schemas.device import DeviceUpdate
 from typing import Any
 from datetime import datetime
 from fastapi import HTTPException, status
+from uuid import UUID
 
 class DeviceService:
     def __init__(self, db: Session):
@@ -27,7 +28,7 @@ class DeviceService:
         self.device_repo.update(device, {"last_seen_at": datetime.utcnow()})
         return device
 
-    def bind_device_fingerprint(self, user_id: int, target_device_id: str, new_fingerprint: str) -> Device:
+    def bind_device_fingerprint(self, user_id: int, target_device_id: UUID, new_fingerprint: str) -> Device:
         target_device = self.device_repo.get(target_device_id)
 
         if not target_device or target_device.user_id != user_id:
@@ -93,7 +94,7 @@ class DeviceService:
 
         return device.apps
 
-    def get_application_icon_path(self, app_id: str, device: Device) -> Path:
+    def get_application_icon_path(self, app_id: UUID, device: Device) -> Path:
         app = self.application_repo.get_by_device_and_id(app_id, device.id)
 
         if not app:
@@ -108,7 +109,7 @@ class DeviceService:
 
         return icon_path
     
-    def delete(self, device_id: str):
+    def delete(self, device_id: UUID):
         device = self.device_repo.get(device_id)
 
         if not device:

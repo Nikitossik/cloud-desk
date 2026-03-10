@@ -1,12 +1,12 @@
 from .base import BaseRepository
 from ..models import AppUsagePeriod, SessionAppState, Application
 from typing import Any
-
+from uuid import UUID
 
 class AppUsageRepository(BaseRepository):
     model = AppUsagePeriod
 
-    def save_apps_usage(self, usage_data: dict[str, Any], session_id: str | None = None):
+    def save_apps_usage(self, usage_data: dict[str, Any], session_id: UUID | None = None):
         if usage_data is None:
             return
 

@@ -11,7 +11,7 @@ import jwt
 import app.utils.security as us
 from ..config import setting
 from .device import DeviceService
-
+from uuid import UUID
 
 class AuthService:
     def __init__(self, db: Session):
@@ -121,7 +121,7 @@ class AuthService:
     def resolve_device_rebind(
         self,
         user_id: int,
-        target_device_id: str,
+        target_device_id: UUID,
         new_fingerprint: str,
     ) -> dict[str, Any]:
         user = self.user_repo.get(user_id)
