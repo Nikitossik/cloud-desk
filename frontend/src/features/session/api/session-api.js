@@ -5,6 +5,11 @@ export async function getSessionBySlugRequest(sessionSlug) {
   return data
 }
 
+export async function getSessionAppsBySlugRequest(sessionSlug) {
+  const { data } = await http.get(`/session/by-slug/${sessionSlug}/apps`)
+  return data
+}
+
 export async function createSessionRequest({ name, description, start }) {
   const payload = {
     name,

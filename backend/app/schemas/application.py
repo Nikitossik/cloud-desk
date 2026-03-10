@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict, Field
 from ..models import SessionAppState
 from datetime import datetime
-
+from uuid import UUID
 
 class ApplicationBase(BaseModel):
     model_config = ConfigDict(from_attributes=True, extra="ignore")
@@ -33,4 +33,12 @@ class FullApplicationOut(ApplicationBase):
         description="List of usage periods for the application during the session."
     )
 
+class ApplicationMiniOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
 
+    app_id: UUID = Field(description="Unique identifier for the application.")
+    state_id: UUID = Field(description="Unique identifier for the application state in the session.")
+    name: str = Field(description="Name of the application.")
+    is_active: bool = Field(
+        description="Flag indicating if the application is currently active in the session."
+    )

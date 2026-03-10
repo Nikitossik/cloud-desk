@@ -21,49 +21,28 @@ class DeviceSessionRepository(BaseRepository):
 
         return None
     
-    def get_application_usage(self, slugname: str, device: Device):
-        session = self.get_by_slugname(slugname, device)
-
-        if not session: 
-            return None
-        
+    def get_apps(self, session: DeviceSession):
         rows = (
-        self.db.query(SessionAppState, Application, AppUsagePeriod)
+        self.db.query(SessionAppState, Application)
             .join(
                 Application,
                 SessionAppState.application_id == Application.id,
             )
-            .outerjoin(
-                AppUsagePeriod,
-                sa.and_(
-                    AppUsagePeriod.application_id == Application.id,
-                    AppUsagePeriod.session_id == SessionAppState.session_id,
-                ),
-            )
             .filter(SessionAppState.session_id == session.id)
-            .order_by(Application.name.asc(), AppUsagePeriod.started_at.asc())
+            .order_by(Application.name.asc())
             .all()
         )
         
         result_map = OrderedDict()
 
-        for app_state, app, usage in rows:
+        for app_state, app in rows:
             if app.id not in result_map:
                 result_map[app.id] = {
+                    "app_id": app.id,
+                    "state_id": app_state.id,
                     "name": app.name,
-                    "exe": app.exe,           
-                    "cmdline": app.cmdline,
                     "is_active": app_state.is_active,
-                    "usage_periods": [],
                 }
-
-            if usage is not None:
-                result_map[app.id]["usage_periods"].append(
-                    {
-                        "started_at": usage.started_at,
-                        "ended_at": usage.ended_at,
-                    }
-                )
 
         return list(result_map.values())
 

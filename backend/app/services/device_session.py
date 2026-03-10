@@ -53,10 +53,8 @@ class DeviceSessionService:
 
         return session
     
-    def get_application_usage(self, session: DeviceSession, device: Device) -> dict[str, Any]:
-        usage_data = self.device_session_repo.get_application_usage(session, device)
-
-        return usage_data
+    def get_apps(self, session: DeviceSession):
+        return self.device_session_repo.get_apps(session)
 
     def create_session(
         self, device_session: DeviceSessionIn, device: Device

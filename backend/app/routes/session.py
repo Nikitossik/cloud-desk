@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, status
 import sqlalchemy.orm as so
 from ..schemas.device_session import DeviceSessionIn, DeviceSessionOut, DeviceSessionUpdate, DeviceSessionWithReport
-from ..schemas.application import FullApplicationOut
+from ..schemas.application import FullApplicationOut, ApplicationMiniOut
 import app.models as md
 import app.dependencies as d
 from ..services import DeviceSessionService, DeviceService
@@ -306,7 +306,7 @@ def update_session_by_slug(
 
 @session_route.get(
     "/by-slug/{session_slug}/apps",
-    response_model=list[FullApplicationOut],
+    response_model=list[ApplicationMiniOut],
 )
 def get_session_apps(
     *,
@@ -315,7 +315,7 @@ def get_session_apps(
     session_slug: str,
 ):
     session = DeviceSessionService(db).get_session_by_slugname(session_slug, device)
-    return DeviceSessionService(db).get_application_usage(session, device)
+    return DeviceSessionService(db).get_apps(session)
 
 
 @session_route.post(

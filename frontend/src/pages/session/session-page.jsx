@@ -28,7 +28,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useSessionAppsBySlugQuery } from "@/features/session/hooks/use-session-apps-by-slug-query"
 import { useSessionBySlugQuery } from "@/features/session/hooks/use-session-by-slug-query"
+import { SessionAppCard } from "@/pages/session/components/session-app-card"
 import { SessionDialog } from "@/features/session/components/session-dialog"
 import { formatUiDateTime } from "@/shared/lib/date-time"
 
@@ -43,6 +45,11 @@ export function SessionPage() {
     isLoading,
     error,
   } = useSessionBySlugQuery(session_slug)
+  const {
+    data: sessionApps,
+    isLoading: isSessionAppsLoading,
+    error: sessionAppsError,
+  } = useSessionAppsBySlugQuery(session_slug, Boolean(session && !session.is_active))
 
   const deleteSessionMutation = useMutation({
     mutationFn: async ({ isActive, sessionId }) => {
@@ -239,6 +246,27 @@ export function SessionPage() {
 
       <section className="bg-card text-card-foreground rounded-xl border p-4">
         <h2 className="text-xl font-semibold">Applications</h2>
+
+        {isActive ? (
+          <p className="text-muted-foreground mt-2 text-sm">
+            Live app statuses for active session will be shown with WebSocket updates.
+          </p>
+        ) : isSessionAppsLoading ? (
+          <p className="text-muted-foreground mt-2 text-sm">Loading applications...</p>
+        ) : sessionAppsError ? (
+          <p className="text-destructive mt-2 text-sm">
+            {String(sessionAppsError?.response?.data?.detail || sessionAppsError?.message || "Failed to load applications")}
+          </p>
+        ) : Array.isArray(sessionApps) && sessionApps.length > 0 ? (
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {sessionApps.map((app) => {
+              const appKey = app?.state_id || app?.app_id || app?.name || "unknown-app"
+              return <SessionAppCard key={appKey} app={app} />
+            })}
+          </div>
+        ) : (
+          <p className="text-muted-foreground mt-2 text-sm">No applications in this session.</p>
+        )}
       </section>
 
       <SessionDialog
