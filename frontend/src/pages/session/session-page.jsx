@@ -28,6 +28,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useActiveSessionAppsWs } from "@/features/session/hooks/use-active-session-apps-ws"
 import { useSessionAppsBySlugQuery } from "@/features/session/hooks/use-session-apps-by-slug-query"
 import { useSessionBySlugQuery } from "@/features/session/hooks/use-session-by-slug-query"
 import { SessionAppCard } from "@/pages/session/components/session-app-card"
@@ -109,6 +110,16 @@ export function SessionPage() {
     sessionActionMutation.error?.message ||
     ""
 
+  const isActive = Boolean(session?.is_active)
+  const {
+    apps: activeSessionApps,
+    isLoading: isActiveAppsLoading,
+    error: activeAppsError,
+  } = useActiveSessionAppsWs(Boolean(session && isActive))
+  const statusText = isActive ? "Active" : "Inactive"
+  const createdAtText = session?.created_at ? formatUiDateTime(session.created_at) : ""
+  const visibleApps = isActive ? activeSessionApps : sessionApps
+
   if (isLoading) {
     return (
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
@@ -126,10 +137,6 @@ export function SessionPage() {
       </div>
     )
   }
-
-  const isActive = Boolean(session.is_active)
-  const statusText = isActive ? "Active" : "Inactive"
-  const createdAtText = formatUiDateTime(session.created_at)
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
@@ -248,20 +255,31 @@ export function SessionPage() {
         <h2 className="text-xl font-semibold">Applications</h2>
 
         {isActive ? (
-          <p className="text-muted-foreground mt-2 text-sm">
-            Live app statuses for active session will be shown with WebSocket updates.
-          </p>
+          isActiveAppsLoading ? (
+            <p className="text-muted-foreground mt-2 text-sm">Loading live applications...</p>
+          ) : activeAppsError ? (
+            <p className="text-destructive mt-2 text-sm">{activeAppsError}</p>
+          ) : Array.isArray(visibleApps) && visibleApps.length > 0 ? (
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {visibleApps.map((app) => {
+                const appKey = app?.state_id || app?.app_id || app?.name || "unknown-app"
+                return <SessionAppCard key={appKey} app={{ ...app, is_session_active: true }} />
+              })}
+            </div>
+          ) : (
+            <p className="text-muted-foreground mt-2 text-sm">No applications in active session.</p>
+          )
         ) : isSessionAppsLoading ? (
           <p className="text-muted-foreground mt-2 text-sm">Loading applications...</p>
         ) : sessionAppsError ? (
           <p className="text-destructive mt-2 text-sm">
             {String(sessionAppsError?.response?.data?.detail || sessionAppsError?.message || "Failed to load applications")}
           </p>
-        ) : Array.isArray(sessionApps) && sessionApps.length > 0 ? (
+        ) : Array.isArray(visibleApps) && visibleApps.length > 0 ? (
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {sessionApps.map((app) => {
+            {visibleApps.map((app) => {
               const appKey = app?.state_id || app?.app_id || app?.name || "unknown-app"
-              return <SessionAppCard key={appKey} app={app} />
+              return <SessionAppCard key={appKey} app={{ ...app, is_session_active: false }} />
             })}
           </div>
         ) : (

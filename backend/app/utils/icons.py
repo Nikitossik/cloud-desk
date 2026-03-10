@@ -1,23 +1,11 @@
 from __future__ import annotations
 
 from pathlib import Path
-import platform
-
-try:
-    import win32api
-    import win32con
-    import win32gui
-    import win32ui
-except Exception:
-    win32api = None
-    win32con = None
-    win32gui = None
-    win32ui = None
-
-try:
-    from PIL import Image
-except Exception:
-    Image = None
+import win32api
+import win32con
+import win32gui
+import win32ui
+from PIL import Image
 
 from app.config import BASE_DIR
 
@@ -34,12 +22,6 @@ def get_app_icon_abs_path(icon_key: str) -> Path:
 
 
 def save_application_icon(app_id: str, exe_path: str | None) -> str | None:
-    if platform.system() != "Windows":
-        return None
-
-    if not all([win32api, win32con, win32gui, win32ui, Image]):
-        return None
-
     if not exe_path:
         return None
 

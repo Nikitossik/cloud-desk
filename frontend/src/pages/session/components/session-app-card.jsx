@@ -17,6 +17,11 @@ export function SessionAppCard({ app }) {
   const isOpened = Boolean(app?.is_active)
   const appName = formatAppDisplayName(app?.name)
   const appId = app?.app_id
+  const isSessionActive = Boolean(app?.is_session_active)
+  const statusLabel = isSessionActive
+    ? (isOpened ? "Running" : "Closed")
+    : (isOpened ? "Was running" : "Was closed")
+  const statusClass = isSessionActive && isOpened ? "text-green-600" : "text-muted-foreground"
 
   return (
     <div className="bg-background rounded-lg border p-3">
@@ -29,9 +34,9 @@ export function SessionAppCard({ app }) {
           <p className="truncate text-sm font-medium">{appName}</p>
           <Badge
             variant="outline"
-            className={isOpened ? "text-green-600" : "text-muted-foreground"}
+            className={statusClass}
           >
-            {isOpened ? "Was opened" : "Was closed"}
+            {statusLabel}
           </Badge>
         </div>
       </div>

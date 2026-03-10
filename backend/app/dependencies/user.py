@@ -27,6 +27,10 @@ expired_token_exception = HTTPException(
 def get_current_user(
     *, db: Session = Depends(get_db), token: Annotated[str, Depends(oauth2_scheme)]
 ):
+    return get_current_user_by_token(db=db, token=token)
+
+
+def get_current_user_by_token(*, db: Session, token: str):
     try:
         payload = jwt.decode(
             jwt=token, key=setting.ACCESS_SECRET_KEY, algorithms=[setting.ALGORITHM]
