@@ -1,21 +1,9 @@
 import { Badge } from "@/components/ui/badge"
 import { SessionAppIcon } from "@/pages/session/components/session-app-icon"
 
-function formatAppDisplayName(name) {
-  const baseName = typeof name === "string"
-    ? name.replace(/\.exe$/i, "").trim()
-    : ""
-
-  if (!baseName) {
-    return "Unknown app"
-  }
-
-  return baseName.charAt(0).toUpperCase() + baseName.slice(1)
-}
-
 export function SessionAppCard({ app }) {
   const isOpened = Boolean(app?.is_active)
-  const appName = formatAppDisplayName(app?.name)
+  const appName = app?.display_name
   const appId = app?.app_id
   const isSessionActive = Boolean(app?.is_session_active)
   const statusLabel = isSessionActive

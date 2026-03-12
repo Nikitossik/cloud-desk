@@ -42,6 +42,7 @@ class DeviceSessionRepository(BaseRepository):
                     "state_id": app_state.id,
                     "name": app.name,
                     "is_active": app_state.is_active,
+                    "display_name": app.display_name,
                 }
 
         return list(result_map.values())

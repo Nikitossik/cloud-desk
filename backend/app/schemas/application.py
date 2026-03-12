@@ -9,6 +9,7 @@ class ApplicationBase(BaseModel):
     name: str = Field(description="Name of the application.")
     exe: str = Field(description="Path to the executable file of the application.")
     cmdline: str = Field(description="Command line used to launch the application.")
+    display_name: str = Field(description="User-friendly name of the application.")
 
 class ApplicationOut(ApplicationBase):
     pass
@@ -42,3 +43,4 @@ class ApplicationMiniOut(BaseModel):
     is_active: bool = Field(
         description="Flag indicating if the application is currently active in the session."
     )
+    display_name: str = Field(description="User-friendly name of the application.")

@@ -2,6 +2,7 @@ from __future__ import annotations
 from ..database import Base
 import sqlalchemy.orm as so
 import sqlalchemy as sa
+from sqlalchemy.ext.hybrid import hybrid_property
 import uuid
 
 from typing import TYPE_CHECKING
@@ -39,4 +40,13 @@ class Application(Base):
     __table_args__ = (
         sa.UniqueConstraint("device_id", "exe", name="uq_device_exe"),
     )
+    
+    @hybrid_property
+    def display_name(self):
+        base_name = self.name[:-4].strip() if self.name.lower().endswith(".exe") else self.name.strip()
+
+        if not base_name:
+            return "Unknown app"
+
+        return base_name[0].upper() + base_name[1:]
     
