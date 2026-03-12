@@ -120,6 +120,7 @@ export function SessionPage() {
     withSeconds: false,
     todayAsTime: true,
   })
+  const hasLastActiveAt = Boolean(session?.last_active_at)
   const lastActiveAtText = formatUiDateTime(session?.last_active_at, {
     withSeconds: false,
     todayAsTime: true,
@@ -173,7 +174,7 @@ export function SessionPage() {
           {statusText}
           <span className="text-muted-foreground">•</span>
           <span>Created at {createdAtText}</span>
-          {!isActive ? (
+          {!isActive && hasLastActiveAt ? (
             <>
               <span className="text-muted-foreground">•</span>
               <span>Last active at {lastActiveAtText}</span>
