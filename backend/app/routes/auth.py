@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, Header, Response, Cookie, HTTPException,
 from fastapi.security import OAuth2PasswordRequestForm
 from typing import Annotated
 from pathlib import Path
-import uuid
 from ..dependencies import get_db, get_resolution_user_id
 from sqlalchemy.orm import Session
 from ..schemas.user import UserIn, UserOut
@@ -46,8 +45,6 @@ def login_for_token_pair(
     
     if not x_device_fingerprint and setting.DEBUG:
         x_device_fingerprint = form_data.client_id
-    elif setting.DEBUG:
-        x_device_fingerprint = str(uuid.uuid4())
     
     result = AuthService(db).login_with_device_resolution(
         form_data.username,
@@ -122,7 +119,7 @@ def resolve_device_rebind(
 ):
     token_pair = AuthService(db).resolve_device_rebind(
         user_id=resolution_user_id,
-        target_device_id=str(body.target_device_id),
+        target_device_id=body.target_device_id,
         new_fingerprint=body.new_fingerprint,
     )
 

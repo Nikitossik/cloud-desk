@@ -5,7 +5,7 @@ Binds a selected existing device to a new fingerprint and completes login. Requi
 - Authorization:
   - Resolution token (used by dependency resolver)
 - Body (JSON, required):
-  - `target_device_id` (string, required)
+  - `target_device_id` (UUID string, required)
   - `new_fingerprint` (string, required)
 
 ## Example
