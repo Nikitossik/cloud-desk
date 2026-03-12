@@ -94,7 +94,7 @@ Frontend URL:
 
 - App: `http://127.0.0.1:5173`
 
-Detailed backend endpoint examples are available in [backend/api_docs](./backend/api_docs).
+Detailed backend endpoint examples are available in [backend/docs](./backend/docs).
 
 ## Future Improvements
 
