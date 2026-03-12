@@ -3,12 +3,11 @@ import { useRef, useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   Pencil,
-  Play,
   RotateCcw,
   Trash2,
   Ellipsis,
 } from "lucide-react"
-import { FaPause } from "react-icons/fa"
+import { FaPlay, FaPause } from "react-icons/fa"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -117,7 +116,14 @@ export function SessionPage() {
     error: activeAppsError,
   } = useActiveSessionAppsWs(Boolean(session && isActive))
   const statusText = isActive ? "Active" : "Inactive"
-  const createdAtText = session?.created_at ? formatUiDateTime(session.created_at) : ""
+  const createdAtText = formatUiDateTime(session?.created_at, {
+    withSeconds: false,
+    todayAsTime: true,
+  })
+  const lastActiveAtText = formatUiDateTime(session?.last_active_at, {
+    withSeconds: false,
+    todayAsTime: true,
+  })
   const visibleApps = isActive ? activeSessionApps : sessionApps
 
   if (isLoading) {
@@ -167,11 +173,17 @@ export function SessionPage() {
           {statusText}
           <span className="text-muted-foreground">•</span>
           <span>Created at {createdAtText}</span>
+          {!isActive ? (
+            <>
+              <span className="text-muted-foreground">•</span>
+              <span>Last active at {lastActiveAtText}</span>
+            </>
+          ) : null}
         </Badge>
 
         <div className="flex items-center gap-2">
           <Button
-            className="gap-2"
+            className="gap-2 cursor-pointer"
             disabled={sessionActionMutation.isPending}
             onClick={() => {
               if (isActive || shouldStopActiveRef.current) {
@@ -179,21 +191,21 @@ export function SessionPage() {
                   action: "stop",
                   isActive,
                   sessionId: session.id,
-                })
-                return
+                });
+                return;
               }
 
               sessionActionMutation.mutate({
                 action: "start",
                 isActive,
                 sessionId: session.id,
-              })
+              });
             }}
           >
             {isActive ? (
               <FaPause className="size-3" />
             ) : (
-              <Play className="size-3" />
+              <FaPlay className="size-3" />
             )}
             {isActive ? "Stop" : "Start"}
           </Button>
@@ -209,12 +221,12 @@ export function SessionPage() {
               <DropdownMenuItem
                 disabled={sessionActionMutation.isPending}
                 onClick={(event) => {
-                  event.preventDefault()
+                  event.preventDefault();
                   sessionActionMutation.mutate({
                     action: "restore",
                     isActive,
                     sessionId: session.id,
-                  })
+                  });
                 }}
               >
                 <RotateCcw />
@@ -256,34 +268,58 @@ export function SessionPage() {
 
         {isActive ? (
           isActiveAppsLoading ? (
-            <p className="text-muted-foreground mt-2 text-sm">Loading live applications...</p>
+            <p className="text-muted-foreground mt-2 text-sm">
+              Loading live applications...
+            </p>
           ) : activeAppsError ? (
             <p className="text-destructive mt-2 text-sm">{activeAppsError}</p>
           ) : Array.isArray(visibleApps) && visibleApps.length > 0 ? (
             <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {visibleApps.map((app) => {
-                const appKey = app?.state_id || app?.app_id || app?.name || "unknown-app"
-                return <SessionAppCard key={appKey} app={{ ...app, is_session_active: true }} />
+                const appKey =
+                  app?.state_id || app?.app_id || app?.name || "unknown-app";
+                return (
+                  <SessionAppCard
+                    key={appKey}
+                    app={{ ...app, is_session_active: true }}
+                  />
+                );
               })}
             </div>
           ) : (
-            <p className="text-muted-foreground mt-2 text-sm">No applications in active session.</p>
+            <p className="text-muted-foreground mt-2 text-sm">
+              No applications in active session.
+            </p>
           )
         ) : isSessionAppsLoading ? (
-          <p className="text-muted-foreground mt-2 text-sm">Loading applications...</p>
+          <p className="text-muted-foreground mt-2 text-sm">
+            Loading applications...
+          </p>
         ) : sessionAppsError ? (
           <p className="text-destructive mt-2 text-sm">
-            {String(sessionAppsError?.response?.data?.detail || sessionAppsError?.message || "Failed to load applications")}
+            {String(
+              sessionAppsError?.response?.data?.detail ||
+                sessionAppsError?.message ||
+                "Failed to load applications",
+            )}
           </p>
         ) : Array.isArray(visibleApps) && visibleApps.length > 0 ? (
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {visibleApps.map((app) => {
-              const appKey = app?.state_id || app?.app_id || app?.name || "unknown-app"
-              return <SessionAppCard key={appKey} app={{ ...app, is_session_active: false }} />
+              const appKey =
+                app?.state_id || app?.app_id || app?.name || "unknown-app";
+              return (
+                <SessionAppCard
+                  key={appKey}
+                  app={{ ...app, is_session_active: false }}
+                />
+              );
             })}
           </div>
         ) : (
-          <p className="text-muted-foreground mt-2 text-sm">No applications in this session.</p>
+          <p className="text-muted-foreground mt-2 text-sm">
+            No applications in this session.
+          </p>
         )}
       </section>
 

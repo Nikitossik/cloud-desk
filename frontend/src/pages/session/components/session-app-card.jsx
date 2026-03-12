@@ -21,19 +21,24 @@ export function SessionAppCard({ app }) {
   const statusLabel = isSessionActive
     ? (isOpened ? "Running" : "Closed")
     : (isOpened ? "Was running" : "Was closed")
-  const statusClass = isSessionActive && isOpened ? "text-green-600" : "text-muted-foreground"
+  const statusVariant = isOpened
+    ? (isSessionActive ? "secondary" : "outline")
+    : "outline"
+  const statusClass = isOpened
+    ? isSessionActive
+      ? "bg-green-50 text-green-700 border-green-700"
+      : "text-green-700 border-green-700"
+    : "text-muted-foreground";
 
   return (
     <div className="bg-background rounded-lg border p-3">
       <div className="flex items-start gap-3">
-        <div className="bg-muted rounded-md p-2">
-          <SessionAppIcon appId={appId} appName={appName} />
-        </div>
+        <SessionAppIcon appId={appId} appName={appName} />
 
         <div className="min-w-0 flex-1 space-y-2">
           <p className="truncate text-sm font-medium">{appName}</p>
           <Badge
-            variant="outline"
+            variant={statusVariant}
             className={statusClass}
           >
             {statusLabel}

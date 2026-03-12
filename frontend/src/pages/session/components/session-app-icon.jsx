@@ -37,14 +37,18 @@ export function SessionAppIcon({ appId, appName }) {
   }, [appId])
 
   if (!iconSrc) {
-    return <AppWindow className="text-muted-foreground size-4" />
+    return (
+      <div className="bg-muted rounded-md p-2">
+        <AppWindow className="text-muted-foreground size-4" />
+      </div>
+    )
   }
 
   return (
     <img
       src={iconSrc}
       alt={appName}
-      className="size-4 rounded-sm object-contain"
+      className="size-6 rounded-md object-contain"
       onError={() => setIconSrc(null)}
     />
   )
