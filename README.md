@@ -1,4 +1,4 @@
-# Cloud Desk
+# CloudDesk
 
 A system for managing user sessions, tracking application usage, and restoring working environments. Each session represents a list of open applications, and users can clone, activate, restore, and monitor their sessions. Currently, the system is designed to work on Windows environments.
 

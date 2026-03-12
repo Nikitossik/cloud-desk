@@ -238,7 +238,7 @@ export function AuthPage() {
     <div className="flex min-h-svh items-center justify-center p-4">
       <div className="bg-card text-card-foreground w-full max-w-md rounded-xl border p-6">
         <div className="mb-6 space-y-1">
-          <h1 className="text-2xl font-semibold">Cloud Desk</h1>
+          <h1 className="text-2xl font-semibold">CloudDesk</h1>
           <p className="text-muted-foreground text-sm">
             {mode === "login" ? "Log in to continue" : "Create a new account"}
           </p>

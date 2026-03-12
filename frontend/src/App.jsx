@@ -41,7 +41,7 @@ export default function App() {
     )
   }
 
-  let pageTitle = "Cloud Desk"
+  let pageTitle = "CloudDesk"
   if (pathname.startsWith("/session/")) pageTitle = "Session"
   else if (pathname === "/statistics") pageTitle = "Statistics"
   else if (pathname === "/trash") pageTitle = "Trash"

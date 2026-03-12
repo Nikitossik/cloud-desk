@@ -1,7 +1,7 @@
 APP_DOCS = {
-    "title": "Cloud Desk API",
+    "title": "CloudDesk API",
     "description": (
-        "Cloud Desk API allows users to manage device sessions, "
+        "CloudDesk API allows users to manage device sessions, "
         "track active applications, and restore working environments. "
         "A working environment is represented by a session with application states. "
         "The API supports creating, starting, stopping, restoring, and deleting sessions, "
