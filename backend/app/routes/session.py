@@ -10,8 +10,10 @@ from pathlib import Path
 from uuid import UUID
 
 session_route = APIRouter(prefix="/session", tags=["session"])
-SESSION_DOCS_PATH = Path(__file__).parent.parent.parent / "api_docs" / "session"
-ACTIVE_SESSION_DOCS_PATH = Path(__file__).parent.parent.parent / "api_docs" / "active_session"
+SESSION_DOCS_PATH = Path(__file__).parent.parent.parent / "docs" / "session"
+ACTIVE_SESSION_DOCS_PATH = SESSION_DOCS_PATH / "active"
+BY_ID_SESSION_DOCS_PATH = SESSION_DOCS_PATH / "by-id"
+BY_SLUG_SESSION_DOCS_PATH = SESSION_DOCS_PATH / "by-slug"
 
 @session_route.get(
     "/",
@@ -75,6 +77,7 @@ def get_active_session(
 
 @session_route.patch(
     "/active",
+    description=(ACTIVE_SESSION_DOCS_PATH / "patch_active_session.md").read_text(),
     response_model=DeviceSessionOut,
 )
 def update_active_session(
@@ -178,7 +181,7 @@ def restore_active_session(
 
 @session_route.get(
     "/{session_id}",
-    description=(SESSION_DOCS_PATH / "get_session_by_slug.md").read_text(),
+    description=(BY_ID_SESSION_DOCS_PATH / "get_session_by_id.md").read_text(),
     summary=("Retrieves details of a specific saved session based on its ID.",),
     response_model=DeviceSessionOut,
 )
@@ -192,6 +195,7 @@ def get_session_by_id(
 
 @session_route.patch(
     "/{session_id}",
+    description=(BY_ID_SESSION_DOCS_PATH / "patch_session_by_id.md").read_text(),
     response_model=DeviceSessionOut,
 )
 def update_session_by_id(
@@ -207,7 +211,7 @@ def update_session_by_id(
 
 @session_route.post(
     "/{session_id}/clone",
-    description=(SESSION_DOCS_PATH / "post_session_clone.md").read_text(),
+    description=(BY_ID_SESSION_DOCS_PATH / "post_session_by_id_clone.md").read_text(),
     summary=(
         "Creates a new session by cloning an existing saved session.",
         "If no session name is provided for the clone, a slugified name will be automatically generated.",
@@ -230,6 +234,7 @@ def clone_session_by_id(
 
 @session_route.delete(
     "/{session_id}",
+    description=(BY_ID_SESSION_DOCS_PATH / "delete_session_by_id.md").read_text(),
     summary="Deletes a saved session based on its ID.",
     status_code=status.HTTP_204_NO_CONTENT,
 )
@@ -245,7 +250,7 @@ def delete_session_by_id(
 
 @session_route.post(
     "/{session_id}/start",
-    description=(SESSION_DOCS_PATH / "post_session_start.md").read_text(),
+    description=(BY_ID_SESSION_DOCS_PATH / "post_session_by_id_start.md").read_text(),
     summary="Starts the selected saved session for the authenticated device.",
     response_model=DeviceSessionOut,
 )
@@ -261,7 +266,7 @@ def start_session_by_id(
 
 @session_route.post(
     "/{session_id}/restore",
-    description=(SESSION_DOCS_PATH / "post_session_restore.md").read_text(),
+    description=(BY_ID_SESSION_DOCS_PATH / "post_session_by_id_restore.md").read_text(),
     summary="Restores a saved session and optionally reopens applications according to the saved session state.",
     response_model=DeviceSessionWithReport,
 )
@@ -278,7 +283,7 @@ def restore_session_by_id(
 
 @session_route.get(
     "/by-slug/{session_slug}",
-    description=(SESSION_DOCS_PATH / "get_session_by_slug.md").read_text(),
+    description=(BY_SLUG_SESSION_DOCS_PATH / "get_session_by_slug.md").read_text(),
     summary=("Retrieves details of a specific saved session based on its slugname.",),
     response_model=DeviceSessionOut,
 )
@@ -292,6 +297,7 @@ def get_session_by_slug(
 
 @session_route.patch(
     "/by-slug/{session_slug}",
+    description=(BY_SLUG_SESSION_DOCS_PATH / "patch_session_by_slug.md").read_text(),
     response_model=DeviceSessionOut,
 )
 def update_session_by_slug(
@@ -307,6 +313,7 @@ def update_session_by_slug(
 
 @session_route.get(
     "/by-slug/{session_slug}/apps",
+    description=(BY_SLUG_SESSION_DOCS_PATH / "get_session_by_slug_apps.md").read_text(),
     response_model=list[ApplicationMiniOut],
 )
 def get_session_apps(
@@ -321,7 +328,7 @@ def get_session_apps(
 
 @session_route.post(
     "/by-slug/{session_slug}/clone",
-    description=(SESSION_DOCS_PATH / "post_session_clone.md").read_text(),
+    description=(BY_SLUG_SESSION_DOCS_PATH / "post_session_by_slug_clone.md").read_text(),
     summary=(
         "Creates a new session by cloning an existing saved session.",
         "If no session name is provided for the clone, a slugified name will be automatically generated.",
@@ -344,7 +351,7 @@ def clone_session_by_slug(
 
 @session_route.delete(
     "/by-slug/{session_slug}",
-    description=(SESSION_DOCS_PATH / "delete_session_by_slug.md").read_text(),
+    description=(BY_SLUG_SESSION_DOCS_PATH / "delete_session_by_slug.md").read_text(),
     summary="Deletes a saved session based on its slugname.",
     status_code=status.HTTP_204_NO_CONTENT,
 )
@@ -360,7 +367,7 @@ def delete_session_by_slug(
 
 @session_route.post(
     "/by-slug/{session_slug}/start",
-    description=(SESSION_DOCS_PATH / "post_session_start.md").read_text(),
+    description=(BY_SLUG_SESSION_DOCS_PATH / "post_session_by_slug_start.md").read_text(),
     summary="Starts the selected saved session for the authenticated device.",
     response_model=DeviceSessionOut,
 )
@@ -376,7 +383,7 @@ def start_session_by_slug(
 
 @session_route.post(
     "/by-slug/{session_slug}/restore",
-    description=(SESSION_DOCS_PATH / "post_session_restore.md").read_text(),
+    description=(BY_SLUG_SESSION_DOCS_PATH / "post_session_by_slug_restore.md").read_text(),
     summary="Restores a saved session and optionally reopens applications according to the saved session state.",
     response_model=DeviceSessionWithReport,
 )

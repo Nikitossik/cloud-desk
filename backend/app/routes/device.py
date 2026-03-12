@@ -14,10 +14,11 @@ from pathlib import Path
 from uuid import UUID
 
 device_route = APIRouter(prefix="/device", tags=["device"])
-DOCS_PATH = Path(__file__).parent.parent.parent / "api_docs" / "device"
+DOCS_PATH = Path(__file__).parent.parent.parent / "docs" / "device"
 
 @device_route.get(
     "/",
+    description=(DOCS_PATH / "get_device_all.md").read_text(),
     summary="Retrieves the currently authenticated user's devices.",
     response_model=list[DeviceOut],
 )
@@ -28,6 +29,7 @@ async def get_me(
 
 @device_route.get(
     "/local",
+    description=(DOCS_PATH / "get_device_local.md").read_text(),
     summary="Retrieves details about the currently registered device.",
     response_model=DeviceBase,
 )
@@ -47,6 +49,7 @@ def get_current_device(current_device: Annotated[md.Device, Depends(get_current_
 
 @device_route.patch(
     "/current",
+    description=(DOCS_PATH / "patch_device_current.md").read_text(),
     summary="Updates details about the currently registered device.",
     response_model=DeviceOut,
 )
@@ -85,6 +88,7 @@ def get_device_apps(
 
 @device_route.get(
     "/apps/{app_id}/icon",
+    description=(DOCS_PATH / "get_device_app_icon.md").read_text(),
     summary="Returns application icon file by application id for current device.",
 )
 def get_application_icon(

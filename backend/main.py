@@ -14,7 +14,7 @@ from app.models import (
     AppUsagePeriod,
 )
 import app.routes as r
-from api_docs.app_docs import APP_DOCS
+from docs.app_docs import APP_DOCS
 from app.config import setting, BASE_DIR
 from app.utils.lifespan import lifespan
 

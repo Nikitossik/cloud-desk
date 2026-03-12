@@ -17,7 +17,7 @@ from ..services import AuthService
 from ..config import setting
 
 auth_route = APIRouter(prefix="/auth", tags=["auth"])
-DOCS_PATH = Path(__file__).parent.parent.parent / "api_docs" / "auth"
+DOCS_PATH = Path(__file__).parent.parent.parent / "docs" / "auth"
 
 
 @auth_route.post(
@@ -95,6 +95,7 @@ def refresh_access_token(
 
 @auth_route.post(
     "/device/resolve/devices",
+    description=(DOCS_PATH / "post_device_resolve_devices.md").read_text(),
     summary="Returns user's devices for device-resolution flow.",
     response_model=list[DeviceOut],
 )
@@ -108,6 +109,7 @@ def get_devices_for_resolution(
 
 @auth_route.post(
     "/device/resolve/rebind",
+    description=(DOCS_PATH / "post_device_resolve_rebind.md").read_text(),
     summary="Binds selected existing device to new fingerprint and returns auth tokens.",
     response_model=Token,
 )
@@ -138,6 +140,7 @@ def resolve_device_rebind(
 
 @auth_route.post(
     "/device/resolve/create",
+    description=(DOCS_PATH / "post_device_resolve_create.md").read_text(),
     summary="Creates/binds new device fingerprint and returns auth tokens.",
     response_model=Token,
 )
@@ -168,6 +171,7 @@ def resolve_device_create(
 
 @auth_route.post(
     "/device/resolve/cancel",
+    description=(DOCS_PATH / "post_device_resolve_cancel.md").read_text(),
     summary="Cancels device-resolution flow. Optionally removes user created during signup.",
     status_code=status.HTTP_204_NO_CONTENT,
 )

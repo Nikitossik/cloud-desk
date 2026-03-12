@@ -10,8 +10,13 @@ from ..schemas.sidebar import UserSidebarOut
 from ..services.user import UserService
 
 user_route = APIRouter(prefix="/user", tags=["user"])
+DOCS_PATH = Path(__file__).resolve().parents[2] / "docs" / "user"
 
-@user_route.delete('/', status_code=status.HTTP_204_NO_CONTENT)
+@user_route.delete(
+    '/',
+    status_code=status.HTTP_204_NO_CONTENT,
+    description=(DOCS_PATH / "delete_user_all.md").read_text(),
+)
 async def delete_all_users(
     db: Annotated[Session, Depends(get_db)],
 ):
@@ -23,6 +28,7 @@ async def delete_all_users(
     "/me",
     summary="Retrieves the currently authenticated user's profile.",
     response_model=UserOut,
+    description=(DOCS_PATH / "get_user_me.md").read_text(),
 )
 async def get_me(
     current_user: Annotated[User, Depends(get_current_user)],
@@ -30,7 +36,12 @@ async def get_me(
     return current_user
 
 
-@user_route.patch("/me", summary="Updates the currently authenticated user's profile.", response_model=UserOut)
+@user_route.patch(
+    "/me",
+    summary="Updates the currently authenticated user's profile.",
+    response_model=UserOut,
+    description=(DOCS_PATH / "patch_user_me.md").read_text(),
+)
 async def update_me(
     user_update: UserUpdate,
     current_user: Annotated[User, Depends(get_current_user)],
@@ -38,7 +49,12 @@ async def update_me(
 ):
     return UserService(db).update(current_user.id, user_update)
 
-@user_route.get("/me/sidebar", summary="Retrieves the data needed to populate the user's sidebar.", response_model=UserSidebarOut)
+@user_route.get(
+    "/me/sidebar",
+    summary="Retrieves the data needed to populate the user's sidebar.",
+    response_model=UserSidebarOut,
+    description=(DOCS_PATH / "get_user_me_sidebar.md").read_text(),
+)
 async def get_sidebar_data(
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
