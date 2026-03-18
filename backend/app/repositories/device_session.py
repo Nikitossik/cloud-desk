@@ -21,29 +21,44 @@ class DeviceSessionRepository(BaseRepository):
 
         return None
     
-    def get_apps(self, session: DeviceSession):
-        rows = (
-        self.db.query(SessionAppState, Application)
+    def get_apps(
+        self,
+        session: DeviceSession,
+        active_only: bool = False,
+        include_launch_fields: bool = False,
+    ):
+        query = (
+            self.db.query(SessionAppState, Application)
             .join(
                 Application,
                 SessionAppState.application_id == Application.id,
             )
             .filter(SessionAppState.session_id == session.id)
             .order_by(Application.name.asc())
-            .all()
         )
+
+        if active_only:
+            query = query.filter(SessionAppState.is_active.is_(True))
+
+        rows = query.all()
         
         result_map = OrderedDict()
 
         for app_state, app in rows:
             if app.id not in result_map:
-                result_map[app.id] = {
+                app_data = {
                     "app_id": app.id,
                     "state_id": app_state.id,
                     "name": app.name,
                     "is_active": app_state.is_active,
                     "display_name": app.display_name,
                 }
+
+                if include_launch_fields:
+                    app_data["exe"] = app.exe
+                    app_data["cmdline"] = app.cmdline
+
+                result_map[app.id] = app_data
 
         return list(result_map.values())
 

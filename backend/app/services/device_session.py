@@ -4,7 +4,7 @@ from .session_tracker import SessionTracker
 from ..models import Device, DeviceSession
 from ..repositories import DeviceSessionRepository, AppUsageRepository
 from ..schemas.device_session import DeviceSessionIn, DeviceSessionUpdate, DeviceSessionWithReport, DeviceSessionOut
-from ..schemas.application import ApplicationBase   
+from ..schemas.application import ApplicationRestoreReportOut
 from ..utils.naming import generate_name_and_slug
 import app.utils.core as uc
 from datetime import datetime, timezone
@@ -54,8 +54,17 @@ class DeviceSessionService:
 
         return session
     
-    def get_apps(self, session: DeviceSession):
-        return self.device_session_repo.get_apps(session)
+    def get_apps(
+        self,
+        session: DeviceSession,
+        active_only: bool = False,
+        include_launch_fields: bool = False,
+    ):
+        return self.device_session_repo.get_apps(
+            session,
+            active_only=active_only,
+            include_launch_fields=include_launch_fields,
+        )
 
     def create_session(
         self, device_session: DeviceSessionIn, device: Device
@@ -163,12 +172,16 @@ class DeviceSessionService:
     def restore_session(self, session: DeviceSession, device: Device) -> DeviceSessionWithReport:
         self.stop_last_active_session(device)
         
-        # only restoring apps that were active in session
-        apps_to_restore = [
-            ApplicationBase.model_validate(app_state.application).model_dump() for app_state in session.session_app_states if app_state.is_active
-        ]
+        apps_to_restore = self.get_apps(
+            session,
+            active_only=True,
+            include_launch_fields=True,
+        )
 
-        restore_report = uc.run_applications(apps_to_restore)
+        restore_report = [
+            ApplicationRestoreReportOut.model_validate(item).model_dump()
+            for item in uc.run_applications(apps_to_restore)
+        ]
         new_active_session = self.start_session(session, device)
         
         time.sleep(1)

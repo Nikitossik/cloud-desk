@@ -1,5 +1,4 @@
 from pydantic import BaseModel, ConfigDict, Field
-from ..models import SessionAppState
 from datetime import datetime
 from uuid import UUID
 
@@ -10,9 +9,6 @@ class ApplicationBase(BaseModel):
     exe: str = Field(description="Path to the executable file of the application.")
     cmdline: str = Field(description="Command line used to launch the application.")
     display_name: str = Field(description="User-friendly name of the application.")
-
-class ApplicationOut(ApplicationBase):
-    pass
 
 
 class ApplicationUsagePeriod(BaseModel):
@@ -44,3 +40,11 @@ class ApplicationMiniOut(BaseModel):
         description="Flag indicating if the application is currently active in the session."
     )
     display_name: str = Field(description="User-friendly name of the application.")
+
+
+class ApplicationRestoreReportOut(ApplicationMiniOut):
+    status: str = Field(description="Restore launch status for this application.")
+    reason: str | None = Field(
+        default=None,
+        description="Failure reason when restore launch was not successful.",
+    )

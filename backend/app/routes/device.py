@@ -27,6 +27,17 @@ async def get_me(
 ):
     return current_user.devices
 
+@device_route.delete(
+    "/",
+    status_code=status.HTTP_204_NO_CONTENT
+)
+async def delete_devices(
+    db: Annotated[so.Session, Depends(get_db)],
+):
+    db.query(md.Device).delete()
+    db.commit()
+    return None
+
 @device_route.get(
     "/local",
     description=(DOCS_PATH / "get_device_local.md").read_text(),

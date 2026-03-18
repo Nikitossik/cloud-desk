@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 import app.dependencies as d
 import app.models as md
 import app.utils.core as uc
+from app.schemas.application import ApplicationMiniOut
 from app.services import DeviceService, DeviceSessionService
 
 ws_session_route = APIRouter(prefix="/ws/session", tags=["session"])
@@ -52,10 +53,10 @@ async def ws_active_session_apps(
                 device_service.sync_applications(device, current_apps_data)
                 session_service.device_session_repo.update_apps_state(active_session, current_apps_data)
 
-                current_apps = session_service.get_apps(active_session)
-                for app in current_apps:
-                    app["app_id"] = str(app.get("app_id")) if app.get("app_id") is not None else None
-                    app["state_id"] = str(app.get("state_id")) if app.get("state_id") is not None else None
+                current_apps = [
+                    ApplicationMiniOut.model_validate(app).model_dump(mode="json")
+                    for app in session_service.get_apps(active_session)
+                ]
 
                 current_signature_map = _build_signature_map(current_apps)
 

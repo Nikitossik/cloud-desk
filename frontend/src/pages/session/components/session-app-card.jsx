@@ -6,17 +6,34 @@ export function SessionAppCard({ app }) {
   const appName = app?.display_name
   const appId = app?.app_id
   const isSessionActive = Boolean(app?.is_session_active)
-  const statusLabel = isSessionActive
-    ? (isOpened ? "Running" : "Closed")
-    : (isOpened ? "Was running" : "Was closed")
-  const statusVariant = isOpened
-    ? (isSessionActive ? "secondary" : "outline")
-    : "outline"
-  const statusClass = isOpened
-    ? isSessionActive
+  const restoreStatus = app?.restore_status
+  const restoreReason = app?.restore_reason
+
+  const statusLabel = restoreStatus
+    ? (restoreStatus === "launching"
+      ? "Launching"
+      : (restoreStatus === "running" ? "Running" : "Closed"))
+    : (isSessionActive
+      ? (isOpened ? "Running" : "Closed")
+      : (isOpened ? "Was running" : "Was closed"))
+
+  const statusVariant = restoreStatus === "launching"
+    ? "secondary"
+    : (restoreStatus === "running"
+      ? "secondary"
+      : "outline")
+
+  const statusClass = restoreStatus === "launching"
+    ? "text-blue-700 border-blue-700"
+    : (restoreStatus === "running"
       ? "bg-green-50 text-green-700 border-green-700"
-      : "text-green-700 border-green-700"
-    : "text-muted-foreground";
+      : (restoreStatus === "closed"
+        ? "text-muted-foreground"
+        : (isOpened
+          ? (isSessionActive
+            ? "bg-green-50 text-green-700 border-green-700"
+            : "text-green-700 border-green-700")
+          : "text-muted-foreground")))
 
   return (
     <div className="bg-background rounded-lg border p-3">
@@ -31,6 +48,11 @@ export function SessionAppCard({ app }) {
           >
             {statusLabel}
           </Badge>
+          {restoreStatus === "closed" && restoreReason ? (
+            <p className="text-destructive text-xs leading-tight">
+              {restoreReason}
+            </p>
+          ) : null}
         </div>
       </div>
     </div>

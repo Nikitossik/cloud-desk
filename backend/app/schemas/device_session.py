@@ -1,8 +1,8 @@
 from pydantic import BaseModel, ConfigDict, model_validator, Field
 import datetime
 from typing_extensions import Self
-from typing import Any
 from uuid import UUID
+from .application import ApplicationRestoreReportOut
 
 
 class DeviceSessionBase(BaseModel):
@@ -52,4 +52,4 @@ class DeviceSessionOut(DeviceSessionBase):
     
 
 class DeviceSessionWithReport(DeviceSessionOut):
-    report: list[Any]
+    report: list[ApplicationRestoreReportOut]

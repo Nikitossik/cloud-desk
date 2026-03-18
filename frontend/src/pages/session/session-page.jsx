@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button"
 import {
   deleteActiveSessionRequest,
   deleteSessionByIdRequest,
-  restoreActiveSessionRequest,
   restoreSessionByIdRequest,
   startSessionByIdRequest,
   stopActiveSessionRequest,
@@ -39,6 +38,7 @@ export function SessionPage() {
   const queryClient = useQueryClient()
   const { session_slug = "" } = useParams()
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [restoreStatusByAppId, setRestoreStatusByAppId] = useState({})
   const shouldStopActiveRef = useRef(false)
   const {
     data: session,
@@ -90,12 +90,6 @@ export function SessionPage() {
         return data
       }
 
-      if (action === "restore") {
-        return isActive
-          ? restoreActiveSessionRequest()
-          : restoreSessionByIdRequest(sessionId)
-      }
-
       return null
     },
     onSuccess: () => {
@@ -107,6 +101,49 @@ export function SessionPage() {
   const actionError =
     sessionActionMutation.error?.response?.data?.detail ||
     sessionActionMutation.error?.message ||
+    ""
+
+  const restoreSessionMutation = useMutation({
+    mutationFn: async ({ sessionId }) => {
+      return restoreSessionByIdRequest(sessionId)
+    },
+    onMutate: () => {
+      const launchingMap = {}
+      for (const app of sessionApps || []) {
+        if (app?.is_active && app?.app_id) {
+          launchingMap[String(app.app_id)] = {
+            status: "launching",
+            reason: null,
+          }
+        }
+      }
+      setRestoreStatusByAppId(launchingMap)
+    },
+    onSuccess: (response) => {
+      const nextStatuses = {}
+      const report = Array.isArray(response?.report) ? response.report : []
+
+      for (const item of report) {
+        if (!item?.app_id) {
+          continue
+        }
+
+        const isRunning = item.status === "started" || item.status === "already_running"
+        nextStatuses[String(item.app_id)] = {
+          status: isRunning ? "running" : "closed",
+          reason: item.reason || null,
+        }
+      }
+
+      setRestoreStatusByAppId(nextStatuses)
+      queryClient.invalidateQueries({ queryKey: USER_SIDEBAR_QUERY_KEY })
+      queryClient.invalidateQueries({ queryKey: SESSION_BY_SLUG_QUERY_KEY(session_slug) })
+    },
+  })
+
+  const restoreError =
+    restoreSessionMutation.error?.response?.data?.detail ||
+    restoreSessionMutation.error?.message ||
     ""
 
   const isActive = Boolean(session?.is_active)
@@ -122,6 +159,11 @@ export function SessionPage() {
   })
   const hasLastActiveAt = Boolean(session?.last_active_at)
   const lastActiveAtText = formatUiDateTime(session?.last_active_at, {
+    withSeconds: false,
+    todayAsTime: true,
+  })
+  const hasRestoredAt = Boolean(session?.restored_at)
+  const restoredAtText = formatUiDateTime(session?.restored_at, {
     withSeconds: false,
     todayAsTime: true,
   })
@@ -165,6 +207,9 @@ export function SessionPage() {
       {actionError ? (
         <p className="text-destructive text-sm">{String(actionError)}</p>
       ) : null}
+      {restoreError ? (
+        <p className="text-destructive text-sm">{String(restoreError)}</p>
+      ) : null}
 
       <div className="flex items-start justify-between gap-4">
         <Badge variant="outline" className="gap-2 px-3 py-1 text-sm">
@@ -178,6 +223,12 @@ export function SessionPage() {
             <>
               <span className="text-muted-foreground">•</span>
               <span>Last active at {lastActiveAtText}</span>
+            </>
+          ) : null}
+          {hasRestoredAt ? (
+            <>
+              <span className="text-muted-foreground">•</span>
+              <span>Restored at {restoredAtText}</span>
             </>
           ) : null}
         </Badge>
@@ -219,20 +270,20 @@ export function SessionPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem
-                disabled={sessionActionMutation.isPending}
-                onClick={(event) => {
-                  event.preventDefault();
-                  sessionActionMutation.mutate({
-                    action: "restore",
-                    isActive,
-                    sessionId: session.id,
-                  });
-                }}
-              >
-                <RotateCcw />
-                Restore
-              </DropdownMenuItem>
+              {!isActive ? (
+                <DropdownMenuItem
+                  disabled={restoreSessionMutation.isPending}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    restoreSessionMutation.mutate({
+                      sessionId: session.id,
+                    });
+                  }}
+                >
+                  <RotateCcw />
+                  {restoreSessionMutation.isPending ? "Restoring..." : "Restore"}
+                </DropdownMenuItem>
+              ) : null}
               <DropdownMenuItem
                 onClick={(event) => {
                   event.preventDefault();
@@ -309,10 +360,18 @@ export function SessionPage() {
             {visibleApps.map((app) => {
               const appKey =
                 app?.state_id || app?.app_id || app?.name || "unknown-app";
+              const restoreState = app?.app_id
+                ? restoreStatusByAppId[String(app.app_id)]
+                : null
               return (
                 <SessionAppCard
                   key={appKey}
-                  app={{ ...app, is_session_active: false }}
+                  app={{
+                    ...app,
+                    is_session_active: false,
+                    restore_status: restoreState?.status,
+                    restore_reason: restoreState?.reason,
+                  }}
                 />
               );
             })}

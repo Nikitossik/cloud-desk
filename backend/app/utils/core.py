@@ -81,24 +81,39 @@ def get_running_applications() -> dict[str, Any]:
 
     return apps_data_dict
 
-def run_applications(apps: list[dict[str, Any]]) -> dict[str, Any]:
+def run_applications(apps: list[dict[str, Any]]) -> list[dict[str, Any]]:
     current_apps = get_running_applications()
     current_exes = {a["exe"] for a in current_apps.values()}
 
     results = []
 
     for app in apps:
+        app_id = app.get("app_id")
+        state_id = app.get("state_id")
         exe = app.get("exe")
         cmdline = app.get("cmdline") or ""
         name = app.get("name") or exe
+        is_active = bool(app.get("is_active"))
+        display_name = app.get("display_name")
+
+        base_result = {
+            "app_id": app_id,
+            "state_id": state_id,
+            "exe": exe,
+            "name": name,
+            "is_active": is_active,
+            "display_name": display_name,
+        }
+
+        def append_result(status: str, reason: str | None = None):
+            results.append({
+                **base_result,
+                "status": status,
+                "reason": reason,
+            })
 
         if exe in current_exes:
-            results.append({
-                "exe": exe,
-                "name": name,
-                "status": "already_running",
-                "reason": None,
-            })
+            append_result("already_running")
             continue
 
         try:
@@ -107,33 +122,13 @@ def run_applications(apps: list[dict[str, Any]]) -> dict[str, Any]:
                 args = [exe]
 
             subprocess.Popen(args)
-            results.append({
-                "exe": exe,
-                "name": name,
-                "status": "started",
-                "reason": None,
-            })
+            append_result("started")
 
         except PermissionError as e:
-            results.append({
-                "exe": exe,
-                "name": name,
-                "status": "failed_access_denied",
-                "reason": str(e),
-            })
+            append_result("failed_access_denied", str(e))
         except FileNotFoundError as e:
-            results.append({
-                "exe": exe,
-                "name": name,
-                "status": "failed_not_found",
-                "reason": str(e),
-            })
+            append_result("failed_not_found", str(e))
         except Exception as e:
-            results.append({
-                "exe": exe,
-                "name": name,
-                "status": "failed_exception",
-                "reason": str(e),
-            })
+            append_result("failed_exception", str(e))
 
     return results
