@@ -193,7 +193,7 @@ class SessionTracker:
             print(f"[SessionTracker] thread started session_id={session_id}")
 
     @staticmethod
-    def stop(session_id: UUID | None) -> dict[str, Any] | None:
+    def stop(session_id: UUID | None, join_timeout: float = 3.0) -> dict[str, Any] | None:
         with SessionTracker.lock:
             if SessionTracker.session_id is None:
                 print("[SessionTracker] stop ignored: no active tracker")
@@ -207,7 +207,14 @@ class SessionTracker:
 
             if SessionTracker.stop_event and SessionTracker.is_running():
                 SessionTracker.stop_event.set()
-                SessionTracker.thread.join()
+                SessionTracker.thread.join(timeout=join_timeout)
+
+                if SessionTracker.thread.is_alive():
+                    print(
+                        f"[SessionTracker] stop timeout after {join_timeout}s session_id={SessionTracker.session_id}"
+                    )
+                    return None
+
                 print(f"[SessionTracker] thread joined session_id={SessionTracker.session_id}")
 
             if SessionTracker.usage_data:
