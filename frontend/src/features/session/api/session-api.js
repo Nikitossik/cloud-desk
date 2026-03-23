@@ -5,6 +5,15 @@ export async function getSessionBySlugRequest(sessionSlug) {
   return data
 }
 
+export async function getDeletedSessionsRequest() {
+  const { data } = await http.get("/session", {
+    params: {
+      deleted_only: true,
+    },
+  })
+  return data
+}
+
 export async function getSessionAppsBySlugRequest(sessionSlug) {
   const { data } = await http.get(`/session/by-slug/${sessionSlug}/apps`)
   return data
@@ -21,12 +30,7 @@ export async function createSessionRequest({ name, description, start }) {
   return data
 }
 
-export async function updateActiveSessionRequest({ name, description }) {
-  const payload = {
-    name,
-    description,
-  }
-
+export async function updateActiveSessionRequest(payload) {
   const { data } = await http.patch("/session/active", payload)
   return data
 }
@@ -38,6 +42,11 @@ export async function updateSessionByIdRequest(sessionId, { name, description })
   }
 
   const { data } = await http.patch(`/session/${sessionId}`, payload)
+  return data
+}
+
+export async function updateSessionBySlugRequest(sessionSlug, payload) {
+  const { data } = await http.patch(`/session/by-slug/${sessionSlug}`, payload)
   return data
 }
 

@@ -17,6 +17,11 @@ class DeviceSessionService:
         self.device_session_repo: DeviceSessionRepository = DeviceSessionRepository(db)
         self.app_usage_repo: AppUsageRepository = AppUsageRepository(db)
         
+    def get_all_sessions(self, device: Device, deleted_only: bool = False) -> list[DeviceSession]:
+        if deleted_only:
+            return [session for session in device.sessions if session.deleted_at is not None]
+        return device.sessions
+        
     def get_session_by_id(
         self, session_id: UUID, device: Device
     ) -> DeviceSession:
@@ -105,8 +110,18 @@ class DeviceSessionService:
                     status_code=status.HTTP_409_CONFLICT,
                     detail="Session with the given name already exists",
                 )
+        
+        session_to_update = session
+        
+        if session_data.get("is_deleted"):
+            session_to_update = self.stop_session(session)
+            session_data.pop("is_deleted")
+            session_data['deleted_at'] = datetime.now()
+        else:
+            session_data.pop("is_deleted")
+            session_data['deleted_at'] = None
             
-        updated_session = self.device_session_repo.update(session, session_data)
+        updated_session = self.device_session_repo.update(session_to_update, session_data)
 
         return updated_session
 

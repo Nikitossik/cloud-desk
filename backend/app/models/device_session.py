@@ -27,6 +27,7 @@ class DeviceSession(Base):
     saved_at = so.mapped_column(sa.DateTime(), nullable=True)
     last_active_at = so.mapped_column(sa.DateTime(), nullable=True)
     restored_at = so.mapped_column(sa.DateTime(), nullable=True)
+    deleted_at = so.mapped_column(sa.DateTime(), nullable=True)
 
     # relations
 

@@ -5,6 +5,8 @@ import {
   Trash2,
 } from "lucide-react"
 import { NavLink } from "react-router"
+import { Badge } from "@/components/ui/badge"
+import { useUserSidebarQuery } from "@/features/user/hooks/use-user-sidebar-query"
 
 import { NavMain } from "@/components/navbar/nav-main"
 import { NavUser } from "@/components/nav-user"
@@ -23,6 +25,9 @@ export function AppSidebar({
   onAddSession,
   ...props
 }) {
+  const { data: sidebarData } = useUserSidebarQuery()
+  const deletedSessionsCount = Number(sidebarData?.deleted_sessions_count || 0)
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -48,7 +53,14 @@ export function AppSidebar({
             <SidebarMenuButton asChild tooltip="Trash">
               <NavLink to="/trash">
                 <Trash2 />
-                <span>Trash</span>
+                <span className="flex w-full min-w-0 items-center justify-between gap-2">
+                  <span>Trash</span>
+                  {deletedSessionsCount > 0 ? (
+                    <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
+                      {deletedSessionsCount}
+                    </Badge>
+                  ) : null}
+                </span>
               </NavLink>
             </SidebarMenuButton>
           </SidebarMenuItem>

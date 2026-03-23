@@ -23,7 +23,10 @@ class DeviceSessionIn(DeviceSessionBase):
     )
 
 class DeviceSessionUpdate(DeviceSessionBase):
-    pass
+    is_deleted: bool = Field(
+        default=False,
+        description="Flag indicating if the session should be deleted. If true, other fields are ignored.",
+    )
         
 class DeviceSessionOut(DeviceSessionBase):
     id: UUID = Field(description="Unique identifier for the session.")
@@ -48,6 +51,10 @@ class DeviceSessionOut(DeviceSessionBase):
     last_active_at: datetime.datetime | None = Field(
         default=None,
         description="Timestamp when the session was last active.",
+    )
+    deleted_at: datetime.datetime | None = Field(
+        default=None,
+        description="Timestamp when the session was deleted. Null if the session is active.",
     )
     
 

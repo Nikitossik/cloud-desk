@@ -23,9 +23,11 @@ BY_SLUG_SESSION_DOCS_PATH = SESSION_DOCS_PATH / "by-slug"
 )
 def get_all_sessions(
     *,
+    db: Annotated[so.Session, Depends(d.get_db)],
     device: Annotated[md.Device, Depends(d.get_current_device)],
+    deleted_only: bool = False
 ):
-    return device.sessions
+    return DeviceSessionService(db).get_all_sessions(device, deleted_only)
 
 
 @session_route.post(

@@ -35,12 +35,14 @@ class UserService:
     
     def get_sidebar_data(self, current_user: User, current_device: Device) -> UserSidebarOut:
         user_devices = current_user.devices
-        user_sessions = current_device.sessions
+        existing_sessions = [session for session in current_device.sessions if session.deleted_at is None]
+        deleted_sessions = [session for session in current_device.sessions if session.deleted_at is not None]
         
         for device in user_devices:
             device.is_current = (device.id == current_device.id)
         
         return UserSidebarOut(
             devices=user_devices,
-            sessions=user_sessions
+            sessions=existing_sessions,
+            deleted_sessions_count=len(deleted_sessions)
         )

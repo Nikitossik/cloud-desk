@@ -1,4 +1,6 @@
-Returns aggregated sidebar data for the current user: devices with current marker and sessions summary list.
+Returns aggregated sidebar data for the current user: devices with current marker, non-deleted sessions list, and deleted sessions count.
+
+`sessions` contains only sessions that are not deleted (`deleted_at is null`).
 
 ## Parameters
 
@@ -44,6 +46,7 @@ Content-Type: application/json
       "name": "Deep work",
       "is_active": true
     }
-  ]
+  ],
+  "deleted_sessions_count": 2
 }
 ```

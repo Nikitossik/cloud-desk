@@ -15,3 +15,4 @@ class SessionForSidebar(BaseModel):
 class UserSidebarOut(BaseModel):
     devices: list[DeviceForSidebar]
     sessions: list[SessionForSidebar]
+    deleted_sessions_count: int = Field(description="The count of deleted sessions for the current device.")

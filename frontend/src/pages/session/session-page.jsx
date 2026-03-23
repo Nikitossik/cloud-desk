@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from "react-router"
+import { useLocation, useNavigate, useParams } from "react-router"
 import { useRef, useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import {
@@ -11,11 +11,11 @@ import { FaPlay, FaPause } from "react-icons/fa"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
-  deleteActiveSessionRequest,
-  deleteSessionByIdRequest,
   restoreSessionByIdRequest,
   startSessionByIdRequest,
   stopActiveSessionRequest,
+  updateActiveSessionRequest,
+  updateSessionBySlugRequest,
 } from "@/features/session/api/session-api"
 import { SESSION_BY_SLUG_QUERY_KEY } from "@/features/session/lib/query-keys"
 import { USER_SIDEBAR_QUERY_KEY } from "@/features/user/lib/query-keys"
@@ -35,6 +35,7 @@ import { formatUiDateTime } from "@/shared/lib/date-time"
 
 export function SessionPage() {
   const navigate = useNavigate()
+  const { pathname } = useLocation()
   const queryClient = useQueryClient()
   const { session_slug = "" } = useParams()
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
@@ -51,25 +52,32 @@ export function SessionPage() {
     error: sessionAppsError,
   } = useSessionAppsBySlugQuery(session_slug, Boolean(session && !session.is_active))
 
-  const deleteSessionMutation = useMutation({
-    mutationFn: async ({ isActive, sessionId }) => {
-      if (isActive) {
-        await deleteActiveSessionRequest()
-        return
+  const isTrashRoute = pathname.startsWith("/session/trash/")
+
+  const updateDeletedMutation = useMutation({
+    mutationFn: async ({ isDeleted, isActive, sessionSlug }) => {
+      if (isDeleted && isActive) {
+        return updateActiveSessionRequest({ is_deleted: isDeleted })
       }
 
-      await deleteSessionByIdRequest(sessionId)
+      return updateSessionBySlugRequest(sessionSlug, { is_deleted: isDeleted })
     },
-    onSuccess: () => {
-      navigate("/statistics", { replace: true })
+    onSuccess: (_, variables) => {
+      if (variables?.isDeleted) {
+        navigate(`/session/trash/${session_slug}`, { replace: true })
+      } else {
+        navigate(`/session/${session_slug}`, { replace: true })
+      }
+
       queryClient.invalidateQueries({ queryKey: USER_SIDEBAR_QUERY_KEY })
+      queryClient.invalidateQueries({ queryKey: ["session", "deleted"] })
       queryClient.removeQueries({ queryKey: SESSION_BY_SLUG_QUERY_KEY(session_slug) })
     },
   })
 
-  const deleteError =
-    deleteSessionMutation.error?.response?.data?.detail ||
-    deleteSessionMutation.error?.message ||
+  const deletedStateError =
+    updateDeletedMutation.error?.response?.data?.detail ||
+    updateDeletedMutation.error?.message ||
     ""
 
   const sessionActionMutation = useMutation({
@@ -147,6 +155,7 @@ export function SessionPage() {
     ""
 
   const isActive = Boolean(session?.is_active)
+  const isDeleted = Boolean(isTrashRoute || session?.deleted_at || session?.is_deleted)
   const {
     apps: activeSessionApps,
     isLoading: isActiveAppsLoading,
@@ -164,6 +173,11 @@ export function SessionPage() {
   })
   const hasRestoredAt = Boolean(session?.restored_at)
   const restoredAtText = formatUiDateTime(session?.restored_at, {
+    withSeconds: false,
+    todayAsTime: true,
+  })
+  const hasDeletedAt = Boolean(session?.deleted_at)
+  const deletedAtText = formatUiDateTime(session?.deleted_at, {
     withSeconds: false,
     todayAsTime: true,
   })
@@ -201,8 +215,8 @@ export function SessionPage() {
         ) : null}
       </div>
 
-      {deleteError ? (
-        <p className="text-destructive text-sm">{String(deleteError)}</p>
+      {deletedStateError ? (
+        <p className="text-destructive text-sm">{String(deletedStateError)}</p>
       ) : null}
       {actionError ? (
         <p className="text-destructive text-sm">{String(actionError)}</p>
@@ -231,87 +245,114 @@ export function SessionPage() {
               <span>Restored at {restoredAtText}</span>
             </>
           ) : null}
+          {isDeleted && hasDeletedAt ? (
+            <>
+              <span className="text-muted-foreground">•</span>
+              <span>Deleted at {deletedAtText}</span>
+            </>
+          ) : null}
         </Badge>
 
         <div className="flex items-center gap-2">
-          <Button
-            className="gap-2 cursor-pointer"
-            disabled={sessionActionMutation.isPending}
-            onClick={() => {
-              if (isActive || shouldStopActiveRef.current) {
-                sessionActionMutation.mutate({
-                  action: "stop",
+          {isDeleted ? (
+            <Button
+              variant="outline"
+              className="gap-2"
+              disabled={updateDeletedMutation.isPending}
+              onClick={() => {
+                updateDeletedMutation.mutate({
+                  isDeleted: false,
                   isActive,
-                  sessionId: session.id,
-                });
-                return;
-              }
-
-              sessionActionMutation.mutate({
-                action: "start",
-                isActive,
-                sessionId: session.id,
-              });
-            }}
-          >
-            {isActive ? (
-              <FaPause className="size-3" />
-            ) : (
-              <FaPlay className="size-3" />
-            )}
-            {isActive ? "Stop" : "Start"}
-          </Button>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="gap-2">
-                <Ellipsis className="size-4" />
-                Actions
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              {!isActive ? (
-                <DropdownMenuItem
-                  disabled={restoreSessionMutation.isPending}
-                  onClick={(event) => {
-                    event.preventDefault();
-                    restoreSessionMutation.mutate({
+                  sessionSlug: session_slug,
+                })
+              }}
+            >
+              <RotateCcw className="size-4" />
+              {updateDeletedMutation.isPending ? "Restoring..." : "Restore"}
+            </Button>
+          ) : (
+            <>
+              <Button
+                className="gap-2 cursor-pointer"
+                disabled={sessionActionMutation.isPending}
+                onClick={() => {
+                  if (isActive || shouldStopActiveRef.current) {
+                    sessionActionMutation.mutate({
+                      action: "stop",
+                      isActive,
                       sessionId: session.id,
                     });
-                  }}
-                >
-                  <RotateCcw />
-                  {restoreSessionMutation.isPending ? "Restoring..." : "Restore"}
-                </DropdownMenuItem>
-              ) : null}
-              <DropdownMenuItem
-                onClick={(event) => {
-                  event.preventDefault();
-                  setIsEditDialogOpen(true);
-                }}
-              >
-                <Pencil />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                variant="destructive"
-                disabled={deleteSessionMutation.isPending}
-                onClick={(event) => {
-                  event.preventDefault();
-                  deleteSessionMutation.mutate({
-                    isActive: session.is_active,
+                    return;
+                  }
+
+                  sessionActionMutation.mutate({
+                    action: "start",
+                    isActive,
                     sessionId: session.id,
                   });
                 }}
               >
-                <Trash2 />
-                {deleteSessionMutation.isPending
-                  ? "Deleting..."
-                  : "Move to Trash"}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                {isActive ? (
+                  <FaPause className="size-3" />
+                ) : (
+                  <FaPlay className="size-3" />
+                )}
+                {isActive ? "Stop" : "Start"}
+              </Button>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    <Ellipsis className="size-4" />
+                    Actions
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  {!isActive ? (
+                    <DropdownMenuItem
+                      disabled={restoreSessionMutation.isPending}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        restoreSessionMutation.mutate({
+                          sessionId: session.id,
+                        });
+                      }}
+                    >
+                      <RotateCcw />
+                      {restoreSessionMutation.isPending ? "Restoring..." : "Restore"}
+                    </DropdownMenuItem>
+                  ) : null}
+                  <DropdownMenuItem
+                    onClick={(event) => {
+                      event.preventDefault();
+                      setIsEditDialogOpen(true);
+                    }}
+                  >
+                    <Pencil />
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    variant="destructive"
+                    disabled={updateDeletedMutation.isPending}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      updateDeletedMutation.mutate({
+                        isDeleted: true,
+                        isActive: session.is_active,
+                        sessionSlug: session_slug,
+                      })
+                    }}
+                  >
+                    <Trash2 />
+                    {updateDeletedMutation.isPending
+                      ? "Moving..."
+                      : "Move to Trash"}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          )}
         </div>
       </div>
 
@@ -384,7 +425,7 @@ export function SessionPage() {
       </section>
 
       <SessionDialog
-        key={`edit-${session.id}-${session.slugname || session_slug}-${isEditDialogOpen}`}
+        key={`edit-${session.id}-${session.slugname || session_slug}-${isTrashRoute}-${isEditDialogOpen}`}
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         mode="edit"

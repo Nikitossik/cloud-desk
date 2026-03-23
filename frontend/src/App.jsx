@@ -68,6 +68,7 @@ export default function App() {
           <Route path="/login" element={<Navigate to="/" replace />} />
           <Route path="/" element={<Navigate to="/statistics" replace />} />
           <Route path="/session/:session_slug" element={<SessionPage />} />
+          <Route path="/session/trash/:session_slug" element={<SessionPage />} />
           <Route path="/statistics" element={<StatisticsPage />} />
           <Route path="/trash" element={<TrashPage />} />
         </Routes>
