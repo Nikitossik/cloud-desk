@@ -38,5 +38,6 @@ def get_sessions_statistics(
     *,
     db: Annotated[so.Session, Depends(d.get_db)],
     device: Annotated[md.Device, Depends(d.get_current_device)],
+    all_sessions: bool = True,
 ):
-    return AppUsageRepository(db).get_sessions_statistics(device.id)
+    return AppUsageRepository(db).get_sessions_statistics(device.id, all_sessions=all_sessions)

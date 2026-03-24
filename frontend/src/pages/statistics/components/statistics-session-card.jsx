@@ -5,6 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts"
 import { StatisticsPieTooltip } from "@/pages/statistics/components/statistics-pie-tooltip"
 
@@ -28,7 +29,14 @@ export function StatisticsSessionCard({ session, formatDuration }) {
   return (
     <Card>
       <CardHeader className="pb-0">
-        <CardTitle className="wrap-break-word whitespace-normal">{session?.session_name || "Unnamed session"}</CardTitle>
+        <CardTitle>
+          <span className="flex items-center gap-2">
+            <span className="wrap-break-word whitespace-normal">{session?.session_name || "Unnamed session"}</span>
+            {session?.deleted_at ? (
+              <Badge variant="destructive" className="h-5 px-1.5 text-[10px]">In trash</Badge>
+            ) : null}
+          </span>
+        </CardTitle>
         <CardDescription>Applications usage</CardDescription>
       </CardHeader>
       <CardContent>

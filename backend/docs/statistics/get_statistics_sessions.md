@@ -1,18 +1,24 @@
 Returns aggregated session usage statistics for the current authenticated device.
 
-For each session, the response contains usage grouped by application with `total_time` in seconds.
+For each session, the response contains:
+
+- `deleted_at`: timestamp if session is in trash, otherwise `null`
+- `usage`: grouped by application with `total_time` in seconds.
 
 ## Parameters
 
 - `Authorization` (header, required): Bearer access token.
 - `X-Device-Fingerprint` (header, required): Fingerprint of the current device.
+- `all_sessions` (query, optional, default `true`):
+  - `true` — include all sessions (including sessions in trash)
+  - `false` — include only sessions not in trash
 
 ## Example
 
 Request:
 
 ```http
-GET /statistics/sessions HTTP/1.1
+GET /statistics/sessions?all_sessions=true HTTP/1.1
 Authorization: Bearer your-access-token
 X-Device-Fingerprint: your-device-fingerprint
 ```
@@ -27,6 +33,7 @@ Content-Type: application/json
   {
     "session_id": "b6f7f6f4-c355-4702-b8f9-8fd78016068a",
     "session_name": "Deep Work",
+    "deleted_at": null,
     "usage": [
       {
         "app_id": "cc7b5703-87a2-47fc-8ef6-f4279d0c02dd",

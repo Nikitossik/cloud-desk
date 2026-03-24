@@ -12,6 +12,7 @@ import { formatUiDurationSeconds } from "@/shared/lib/date-time"
 
 export function StatisticsPage() {
   const [activeTab, setActiveTab] = useState("applications")
+  const [allSessions, setAllSessions] = useState(true)
 
   const {
     data: appsData,
@@ -28,8 +29,8 @@ export function StatisticsPage() {
     isLoading: isSessionsLoading,
     error: sessionsError,
   } = useQuery({
-    queryKey: ["statistics", "sessions"],
-    queryFn: getStatisticsSessionsRequest,
+    queryKey: ["statistics", "sessions", allSessions],
+    queryFn: () => getStatisticsSessionsRequest({ allSessions }),
     retry: false,
   })
 
@@ -66,6 +67,8 @@ export function StatisticsPage() {
             isLoading={isLoading}
             error={activeError}
             formatDuration={formatUiDurationSeconds}
+            allSessions={allSessions}
+            onAllSessionsChange={setAllSessions}
           />
         </TabsContent>
       </Tabs>

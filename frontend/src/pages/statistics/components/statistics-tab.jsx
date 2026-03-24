@@ -1,7 +1,16 @@
 import { StatisticsSessionCard } from "@/pages/statistics/components/statistics-session-card"
 import { StatisticsSessionAppCard } from "@/pages/statistics/components/statistics-session-app-card"
 
-export function StatisticsTab({ tab, sessions, applications, isLoading, error, formatDuration }) {
+export function StatisticsTab({
+  tab,
+  sessions,
+  applications,
+  isLoading,
+  error,
+  formatDuration,
+  allSessions = true,
+  onAllSessionsChange,
+}) {
   if (isLoading) {
     return <p className="text-muted-foreground">Loading statistics...</p>
   }
@@ -43,18 +52,41 @@ export function StatisticsTab({ tab, sessions, applications, isLoading, error, f
   }
 
   if (!Array.isArray(sessions) || sessions.length === 0) {
-    return <p className="text-muted-foreground">No session usage statistics yet.</p>
+    return (
+      <div className="space-y-3">
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={allSessions}
+            onChange={(event) => onAllSessionsChange?.(event.target.checked)}
+          />
+          <span className="text-muted-foreground">Show sessions from trash</span>
+        </label>
+        <p className="text-muted-foreground">No session usage statistics yet.</p>
+      </div>
+    )
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {sessions.map((session) => (
-        <StatisticsSessionCard
-          key={String(session?.session_id || session?.session_name || "session")}
-          session={session}
-          formatDuration={formatDuration}
+    <div className="space-y-3">
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={allSessions}
+          onChange={(event) => onAllSessionsChange?.(event.target.checked)}
         />
-      ))}
+        <span className="text-muted-foreground">Show sessions from trash</span>
+      </label>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {sessions.map((session) => (
+          <StatisticsSessionCard
+            key={String(session?.session_id || session?.session_name || "session")}
+            session={session}
+            formatDuration={formatDuration}
+          />
+        ))}
+      </div>
     </div>
   )
 }

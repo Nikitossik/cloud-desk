@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/card"
 import { SessionAppIcon } from "@/pages/session/components/session-app-icon"
 import { StatisticsPieTooltip } from "@/pages/statistics/components/statistics-pie-tooltip"
+import { Trash2 } from "lucide-react"
 
 const CHART_COLORS = [
   "var(--chart-1)",
@@ -20,9 +21,11 @@ const CHART_COLORS = [
 export function StatisticsSessionAppCard({ app, formatDuration, usage }) {
   const usageItems = Array.isArray(usage) ? usage : []
   const chartData = usageItems.map((item, index) => ({
+    session_id: item?.session_id,
     session_name: item?.session_name || "Unknown session",
+    deleted_at: item?.deleted_at || null,
     total_time: Number(item?.total_time || 0),
-    fill: CHART_COLORS[index % CHART_COLORS.length],
+    fill: item?.deleted_at ? "var(--muted-foreground)" : CHART_COLORS[index % CHART_COLORS.length],
   }))
   const totalUsage = chartData.reduce((sum, item) => sum + item.total_time, 0)
 
@@ -50,6 +53,7 @@ export function StatisticsSessionAppCard({ app, formatDuration, usage }) {
                       <StatisticsPieTooltip
                         formatDuration={formatDuration}
                         labelKey="session_name"
+                        deletedAtKey="deleted_at"
                       />
                     )}
                   />
@@ -116,9 +120,10 @@ export function StatisticsSessionAppCard({ app, formatDuration, usage }) {
 
             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
               {chartData.map((item, index) => (
-                <div key={`${item.session_name}-${index}`} className="flex items-center gap-2 text-sm">
+                <div key={String(item.session_id || `${item.session_name}-${index}`)} className="flex items-center gap-2 text-sm">
                   <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.fill }} />
                   <span className="text-muted-foreground">{item.session_name}</span>
+                  {item.deleted_at ? <Trash2 className="text-destructive size-3.5" /> : null}
                 </div>
               ))}
             </div>

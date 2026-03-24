@@ -5,7 +5,9 @@ export async function getStatisticsAppsRequest() {
   return data
 }
 
-export async function getStatisticsSessionsRequest() {
-  const { data } = await http.get("/statistics/sessions")
+export async function getStatisticsSessionsRequest({ allSessions = true } = {}) {
+  const { data } = await http.get("/statistics/sessions", {
+    params: { all_sessions: allSessions },
+  })
   return data
 }
