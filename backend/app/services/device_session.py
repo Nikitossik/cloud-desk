@@ -3,7 +3,7 @@ from fastapi import HTTPException, status
 from .session_tracker import SessionTracker
 from ..models import Device, DeviceSession
 from ..repositories import DeviceSessionRepository, AppUsageRepository
-from ..schemas.device_session import DeviceSessionIn, DeviceSessionUpdate, DeviceSessionWithReport, DeviceSessionOut, DeviceSessionTrashPurgeIn
+from ..schemas.device_session import DeviceSessionIn, DeviceSessionUpdate, DeviceSessionWithReport, DeviceSessionOut, DeviceSessionTrashActionIn
 from ..schemas.application import ApplicationRestoreReportOut
 from ..utils.naming import generate_name_and_slug
 import app.utils.core as uc
@@ -213,18 +213,25 @@ class DeviceSessionService:
         for session in device.sessions:
             self.delete_session(session)
 
-    def purge_trash(self, device: Device, purge_data: DeviceSessionTrashPurgeIn):
-        if purge_data.all:
-            sessions_to_delete = [
-                session for session in device.sessions if session.deleted_at is not None
-            ]
-        else:
-            selected_ids = set(purge_data.session_ids or [])
-            sessions_to_delete = [
-                session
-                for session in device.sessions
-                if session.deleted_at is not None and session.id in selected_ids
-            ]
+    def _select_deleted_sessions(self, device: Device, action_data: DeviceSessionTrashActionIn) -> list[DeviceSession]:
+        if action_data.all:
+            return [session for session in device.sessions if session.deleted_at is not None]
+
+        selected_ids = set(action_data.session_ids or [])
+        return [
+            session
+            for session in device.sessions
+            if session.deleted_at is not None and session.id in selected_ids
+        ]
+
+    def purge_trash(self, device: Device, purge_data: DeviceSessionTrashActionIn):
+        sessions_to_delete = self._select_deleted_sessions(device, purge_data)
 
         for session in sessions_to_delete:
             self.device_session_repo.delete_instance(session)
+
+    def restore_trash(self, device: Device, restore_data: DeviceSessionTrashActionIn):
+        sessions_to_restore = self._select_deleted_sessions(device, restore_data)
+
+        for session in sessions_to_restore:
+            self.device_session_repo.update(session, {"deleted_at": None})

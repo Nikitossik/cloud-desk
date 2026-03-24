@@ -29,14 +29,14 @@ class DeviceSessionUpdate(DeviceSessionBase):
     )
 
 
-class DeviceSessionTrashPurgeIn(BaseModel):
+class DeviceSessionTrashActionIn(BaseModel):
     session_ids: list[UUID] | None = Field(
         default=None,
-        description="List of deleted session IDs to permanently remove.",
+        description="List of deleted session IDs to process.",
     )
     all: bool = Field(
         default=False,
-        description="When true, permanently removes all deleted sessions for the current device.",
+        description="When true, applies action to all deleted sessions for the current device.",
     )
 
     @model_validator(mode="after")

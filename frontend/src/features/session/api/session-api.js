@@ -43,6 +43,11 @@ export async function purgeSessionTrashRequest(payload) {
   return data
 }
 
+export async function restoreSessionTrashRequest(payload) {
+  const { data } = await http.post("/session/trash/restore", payload)
+  return data
+}
+
 export async function startSessionByIdRequest(sessionId) {
   const { data } = await http.post(`/session/${sessionId}/start`)
   return data

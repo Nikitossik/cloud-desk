@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, status
 import sqlalchemy.orm as so
-from ..schemas.device_session import DeviceSessionIn, DeviceSessionOut, DeviceSessionUpdate, DeviceSessionWithReport, DeviceSessionTrashPurgeIn
+from ..schemas.device_session import DeviceSessionIn, DeviceSessionOut, DeviceSessionUpdate, DeviceSessionWithReport, DeviceSessionTrashActionIn
 from ..schemas.application import FullApplicationOut, ApplicationMiniOut
 import app.models as md
 import app.dependencies as d
@@ -70,9 +70,25 @@ def purge_trash_sessions(
     *,
     db: Annotated[so.Session, Depends(d.get_db)],
     device: Annotated[md.Device, Depends(d.get_current_device)],
-    purge_data: DeviceSessionTrashPurgeIn,
+    purge_data: DeviceSessionTrashActionIn,
 ):
     DeviceSessionService(db).purge_trash(device, purge_data)
+    return None
+
+
+@session_route.post(
+    "/trash/restore",
+    description=(SESSION_DOCS_PATH / "post_session_trash_restore.md").read_text(),
+    summary="Restores deleted sessions from trash.",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def restore_trash_sessions(
+    *,
+    db: Annotated[so.Session, Depends(d.get_db)],
+    device: Annotated[md.Device, Depends(d.get_current_device)],
+    restore_data: DeviceSessionTrashActionIn,
+):
+    DeviceSessionService(db).restore_trash(device, restore_data)
     return None
     
 @session_route.get(
