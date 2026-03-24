@@ -2,11 +2,11 @@ import { useLocation, useNavigate, useParams } from "react-router"
 import { useRef, useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import {
+  deleteSessionByIdRequest,
   restoreSessionByIdRequest,
   startSessionByIdRequest,
   stopActiveSessionRequest,
-  updateActiveSessionRequest,
-  updateSessionBySlugRequest,
+  updateSessionByIdRequest,
 } from "@/features/session/api/session-api"
 import { SESSION_BY_SLUG_QUERY_KEY } from "@/features/session/lib/query-keys"
 import { USER_SIDEBAR_QUERY_KEY } from "@/features/user/lib/query-keys"
@@ -41,12 +41,8 @@ export function SessionPage() {
   const isTrashRoute = pathname.startsWith("/session/trash/")
 
   const updateDeletedMutation = useMutation({
-    mutationFn: async ({ isDeleted, isActive, sessionSlug }) => {
-      if (isDeleted && isActive) {
-        return updateActiveSessionRequest({ is_deleted: isDeleted })
-      }
-
-      return updateSessionBySlugRequest(sessionSlug, { is_deleted: isDeleted })
+    mutationFn: async ({ sessionId, isDeleted }) => {
+      return updateSessionByIdRequest(sessionId, { is_deleted: isDeleted })
     },
     onSuccess: (_, variables) => {
       if (variables?.isDeleted) {
@@ -140,6 +136,23 @@ export function SessionPage() {
     restoreSessionMutation.error?.message ||
     ""
 
+  const deletePermanentMutation = useMutation({
+    mutationFn: async ({ sessionId }) => {
+      await deleteSessionByIdRequest(sessionId)
+    },
+    onSuccess: () => {
+      navigate("/trash", { replace: true })
+      queryClient.invalidateQueries({ queryKey: USER_SIDEBAR_QUERY_KEY })
+      queryClient.invalidateQueries({ queryKey: ["session", "trash"] })
+      queryClient.removeQueries({ queryKey: SESSION_BY_SLUG_QUERY_KEY(session_slug) })
+    },
+  })
+
+  const deletePermanentError =
+    deletePermanentMutation.error?.response?.data?.detail ||
+    deletePermanentMutation.error?.message ||
+    ""
+
   const isActive = Boolean(session?.is_active)
   const isDeleted = Boolean(isTrashRoute || session?.deleted_at || session?.is_deleted)
   const {
@@ -189,9 +202,8 @@ export function SessionPage() {
 
   const handleRestoreFromTrash = () => {
     updateDeletedMutation.mutate({
+      sessionId: session.id,
       isDeleted: false,
-      isActive,
-      sessionSlug: session_slug,
     })
   }
 
@@ -220,9 +232,14 @@ export function SessionPage() {
 
   const handleMoveToTrash = () => {
     updateDeletedMutation.mutate({
+      sessionId: session.id,
       isDeleted: true,
-      isActive: session.is_active,
-      sessionSlug: session_slug,
+    })
+  }
+
+  const handleDeletePermanently = () => {
+    deletePermanentMutation.mutate({
+      sessionId: session.id,
     })
   }
 
@@ -249,6 +266,9 @@ export function SessionPage() {
       {restoreError ? (
         <p className="text-destructive text-sm">{String(restoreError)}</p>
       ) : null}
+      {deletePermanentError ? (
+        <p className="text-destructive text-sm">{String(deletePermanentError)}</p>
+      ) : null}
 
       <div className="flex items-start justify-between gap-4">
         <SessionMetaBadgeRow
@@ -268,9 +288,11 @@ export function SessionPage() {
           isDeleted={isDeleted}
           isActive={isActive}
           isUpdateDeletedPending={updateDeletedMutation.isPending}
+          isDeletePermanentPending={deletePermanentMutation.isPending}
           isSessionActionPending={sessionActionMutation.isPending}
           isRestorePending={restoreSessionMutation.isPending}
           onRestoreFromTrash={handleRestoreFromTrash}
+          onDeletePermanently={handleDeletePermanently}
           onToggleStartStop={handleToggleStartStop}
           onRestore={handleRestore}
           onEdit={() => setIsEditDialogOpen(true)}

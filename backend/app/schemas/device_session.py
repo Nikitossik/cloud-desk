@@ -23,10 +23,33 @@ class DeviceSessionIn(DeviceSessionBase):
     )
 
 class DeviceSessionUpdate(DeviceSessionBase):
-    is_deleted: bool = Field(
-        default=False,
+    is_deleted: bool | None = Field(
+        default=None,
         description="Flag indicating if the session should be deleted. If true, other fields are ignored.",
     )
+
+
+class DeviceSessionTrashPurgeIn(BaseModel):
+    session_ids: list[UUID] | None = Field(
+        default=None,
+        description="List of deleted session IDs to permanently remove.",
+    )
+    all: bool = Field(
+        default=False,
+        description="When true, permanently removes all deleted sessions for the current device.",
+    )
+
+    @model_validator(mode="after")
+    def validate_payload(self) -> Self:
+        has_session_ids = bool(self.session_ids)
+
+        if self.all and has_session_ids:
+            raise ValueError("Provide either 'all=true' or 'session_ids', not both")
+
+        if not self.all and not has_session_ids:
+            raise ValueError("Provide 'all=true' or a non-empty 'session_ids' list")
+
+        return self
         
 class DeviceSessionOut(DeviceSessionBase):
     id: UUID = Field(description="Unique identifier for the session.")

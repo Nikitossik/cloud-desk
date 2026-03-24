@@ -3,7 +3,7 @@ from fastapi import HTTPException, status
 from .session_tracker import SessionTracker
 from ..models import Device, DeviceSession
 from ..repositories import DeviceSessionRepository, AppUsageRepository
-from ..schemas.device_session import DeviceSessionIn, DeviceSessionUpdate, DeviceSessionWithReport, DeviceSessionOut
+from ..schemas.device_session import DeviceSessionIn, DeviceSessionUpdate, DeviceSessionWithReport, DeviceSessionOut, DeviceSessionTrashPurgeIn
 from ..schemas.application import ApplicationRestoreReportOut
 from ..utils.naming import generate_name_and_slug
 import app.utils.core as uc
@@ -118,7 +118,6 @@ class DeviceSessionService:
             session_data.pop("is_deleted")
             session_data['deleted_at'] = datetime.now()
         else:
-            session_data.pop("is_deleted")
             session_data['deleted_at'] = None
             
         updated_session = self.device_session_repo.update(session_to_update, session_data)
@@ -225,3 +224,19 @@ class DeviceSessionService:
     def delete_all_sessions(self, device: Device):
         for session in device.sessions:
             self.delete_session(session)
+
+    def purge_trash(self, device: Device, purge_data: DeviceSessionTrashPurgeIn):
+        if purge_data.all:
+            sessions_to_delete = [
+                session for session in device.sessions if session.deleted_at is not None
+            ]
+        else:
+            selected_ids = set(purge_data.session_ids or [])
+            sessions_to_delete = [
+                session
+                for session in device.sessions
+                if session.deleted_at is not None and session.id in selected_ids
+            ]
+
+        for session in sessions_to_delete:
+            self.device_session_repo.delete_instance(session)

@@ -4,7 +4,6 @@ import { useNavigate } from "react-router"
 import { z } from "zod"
 import {
   createSessionRequest,
-  updateActiveSessionRequest,
   updateSessionByIdRequest,
 } from "@/features/session/api/session-api"
 import { SESSION_BY_SLUG_QUERY_KEY } from "@/features/session/lib/query-keys"
@@ -46,10 +45,6 @@ export function SessionDialog({
         const payload = {
           name: normalizeText(values.name),
           description: normalizeText(values.description),
-        }
-
-        if (session?.is_active) {
-          return updateActiveSessionRequest(payload)
         }
 
         return updateSessionByIdRequest(session?.id, payload)

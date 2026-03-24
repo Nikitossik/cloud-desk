@@ -29,33 +29,18 @@ export async function createSessionRequest({ name, description, start }) {
   const { data } = await http.post("/session", payload)
   return data
 }
-
-export async function updateActiveSessionRequest(payload) {
-  const { data } = await http.patch("/session/active", payload)
-  return data
-}
-
-export async function updateSessionByIdRequest(sessionId, { name, description }) {
-  const payload = {
-    name,
-    description,
-  }
-
+export async function updateSessionByIdRequest(sessionId, payload) {
   const { data } = await http.patch(`/session/${sessionId}`, payload)
   return data
 }
 
-export async function updateSessionBySlugRequest(sessionSlug, payload) {
-  const { data } = await http.patch(`/session/by-slug/${sessionSlug}`, payload)
-  return data
-}
-
-export async function deleteActiveSessionRequest() {
-  await http.delete("/session/active")
-}
-
 export async function deleteSessionByIdRequest(sessionId) {
   await http.delete(`/session/${sessionId}`)
+}
+
+export async function purgeSessionTrashRequest(payload) {
+  const { data } = await http.post("/session/trash/purge", payload)
+  return data
 }
 
 export async function startSessionByIdRequest(sessionId) {
@@ -65,11 +50,6 @@ export async function startSessionByIdRequest(sessionId) {
 
 export async function stopActiveSessionRequest() {
   const { data } = await http.post("/session/active/stop")
-  return data
-}
-
-export async function restoreActiveSessionRequest() {
-  const { data } = await http.post("/session/active/restore")
   return data
 }
 

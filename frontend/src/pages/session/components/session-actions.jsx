@@ -18,9 +18,11 @@ export function SessionActions({
   isDeleted,
   isActive,
   isUpdateDeletedPending,
+  isDeletePermanentPending,
   isSessionActionPending,
   isRestorePending,
   onRestoreFromTrash,
+  onDeletePermanently,
   onToggleStartStop,
   onRestore,
   onEdit,
@@ -29,15 +31,26 @@ export function SessionActions({
   return (
     <div className="flex items-center gap-2">
       {isDeleted ? (
-        <Button
-          variant="outline"
-          className="gap-2"
-          disabled={isUpdateDeletedPending}
-          onClick={onRestoreFromTrash}
-        >
-          <RotateCcw className="size-4" />
-          {isUpdateDeletedPending ? "Restoring from Trash..." : "Restore from Trash"}
-        </Button>
+        <>
+          <Button
+            variant="outline"
+            className="gap-2"
+            disabled={isUpdateDeletedPending || isDeletePermanentPending}
+            onClick={onRestoreFromTrash}
+          >
+            <RotateCcw className="size-4" />
+            {isUpdateDeletedPending ? "Restoring from Trash..." : "Restore from Trash"}
+          </Button>
+          <Button
+            variant="destructive"
+            className="gap-2"
+            disabled={isDeletePermanentPending || isUpdateDeletedPending}
+            onClick={onDeletePermanently}
+          >
+            <Trash2 className="size-4" />
+            {isDeletePermanentPending ? "Deleting..." : "Delete Permanently"}
+          </Button>
+        </>
       ) : (
         <>
           <Button
