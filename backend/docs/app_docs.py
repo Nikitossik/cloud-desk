@@ -49,5 +49,12 @@ APP_DOCS = {
                 "All operations require valid authentication tokens."
             ),
         },
+        {
+            "name": "statistics",
+            "description": (
+                "Endpoints for aggregated application/session usage statistics "
+                "for the current authenticated device."
+            ),
+        },
     ],
 }

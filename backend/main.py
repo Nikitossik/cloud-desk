@@ -44,6 +44,7 @@ app.include_router(r.user_route)
 app.include_router(r.device_route)
 app.include_router(r.session_route)
 app.include_router(r.ws_session_route)
+app.include_router(r.statistics_route)
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host=setting.HOST, port=8000, reload=True)

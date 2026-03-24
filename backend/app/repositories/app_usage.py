@@ -1,10 +1,138 @@
 from .base import BaseRepository
-from ..models import AppUsagePeriod, SessionAppState, Application
+from ..models import AppUsagePeriod, SessionAppState, Application, DeviceSession
 from typing import Any
 from uuid import UUID
 
 class AppUsageRepository(BaseRepository):
     model = AppUsagePeriod
+
+    def get_apps_statistics(self, device_id: UUID | str):
+        rows = (
+            self.db.query(AppUsagePeriod, Application, DeviceSession)
+            .join(Application, AppUsagePeriod.application_id == Application.id)
+            .join(DeviceSession, AppUsagePeriod.session_id == DeviceSession.id)
+            .filter(
+                Application.device_id == device_id,
+                AppUsagePeriod.ended_at.isnot(None),
+            )
+            .all()
+        )
+
+        app_map: dict[str, dict[str, Any]] = {}
+
+        for usage_period, app, session in rows:
+            duration = usage_period.duration
+            if not duration:
+                continue
+
+            duration_seconds = int(duration.total_seconds())
+            if duration_seconds <= 0:
+                continue
+
+            app_id = str(app.id)
+            session_name = session.name
+
+            if app_id not in app_map:
+                app_map[app_id] = {
+                    "app_id": app.id,
+                    "display_name": app.display_name,
+                    "usage": {},
+                    "total_time": 0,
+                }
+
+            app_usage = app_map[app_id]["usage"]
+            app_usage[session_name] = app_usage.get(session_name, 0) + duration_seconds
+            app_map[app_id]["total_time"] += duration_seconds
+
+        result = []
+
+        for app_data in app_map.values():
+            usage_items = [
+                {
+                    "session_name": session_name,
+                    "total_time": total_time,
+                }
+                for session_name, total_time in app_data["usage"].items()
+            ]
+            usage_items.sort(key=lambda item: item["total_time"], reverse=True)
+
+            result.append(
+                {
+                    "app_id": app_data["app_id"],
+                    "display_name": app_data["display_name"],
+                    "total_time": app_data["total_time"],
+                    "usage": usage_items,
+                }
+            )
+
+        result.sort(
+            key=lambda item: item["total_time"],
+            reverse=True,
+        )
+        return result
+
+    def get_sessions_statistics(self, device_id: UUID | str):
+        rows = (
+            self.db.query(AppUsagePeriod, Application, DeviceSession)
+            .join(Application, AppUsagePeriod.application_id == Application.id)
+            .join(DeviceSession, AppUsagePeriod.session_id == DeviceSession.id)
+            .filter(
+                DeviceSession.device_id == device_id,
+                AppUsagePeriod.ended_at.isnot(None),
+            )
+            .all()
+        )
+
+        session_map: dict[str, dict[str, Any]] = {}
+
+        for usage_period, app, session in rows:
+            duration = usage_period.duration
+            if not duration:
+                continue
+
+            duration_seconds = int(duration.total_seconds())
+            if duration_seconds <= 0:
+                continue
+
+            session_id = str(session.id)
+            app_id = str(app.id)
+
+            if session_id not in session_map:
+                session_map[session_id] = {
+                    "session_id": session.id,
+                    "session_name": session.name,
+                    "usage": {},
+                }
+
+            session_usage = session_map[session_id]["usage"]
+            if app_id not in session_usage:
+                session_usage[app_id] = {
+                    "app_id": app.id,
+                    "display_name": app.display_name,
+                    "total_time": 0,
+                }
+
+            session_usage[app_id]["total_time"] += duration_seconds
+
+        result = []
+
+        for session_data in session_map.values():
+            usage_items = list(session_data["usage"].values())
+            usage_items.sort(key=lambda item: item["total_time"], reverse=True)
+
+            result.append(
+                {
+                    "session_id": session_data["session_id"],
+                    "session_name": session_data["session_name"],
+                    "usage": usage_items,
+                }
+            )
+
+        result.sort(
+            key=lambda item: sum(usage["total_time"] for usage in item["usage"]),
+            reverse=True,
+        )
+        return result
 
     def save_apps_usage(self, usage_data: dict[str, Any], session_id: UUID | None = None):
         if usage_data is None:
