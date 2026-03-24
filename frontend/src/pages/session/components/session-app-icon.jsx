@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { AppWindow } from "lucide-react"
 import { http } from "@/shared/api/http-client"
 
-export function SessionAppIcon({ appId, appName }) {
+export function SessionAppIcon({ appId, appName, isSessionDeleted = false }) {
   const [iconSrc, setIconSrc] = useState(null)
 
   useEffect(() => {
@@ -38,8 +38,8 @@ export function SessionAppIcon({ appId, appName }) {
 
   if (!iconSrc) {
     return (
-      <div className="bg-muted rounded-md p-2">
-        <AppWindow className="text-muted-foreground size-4" />
+      <div className={`bg-muted rounded-md p-2 ${isSessionDeleted ? "grayscale" : ""}`}>
+        <AppWindow className={`text-muted-foreground size-4 ${isSessionDeleted ? "opacity-75" : ""}`} />
       </div>
     )
   }
@@ -48,7 +48,7 @@ export function SessionAppIcon({ appId, appName }) {
     <img
       src={iconSrc}
       alt={appName}
-      className="size-6 rounded-md object-contain"
+      className={`size-6 rounded-md object-contain ${isSessionDeleted ? "grayscale opacity-80" : ""}`}
       onError={() => setIconSrc(null)}
     />
   )

@@ -6,6 +6,7 @@ export function SessionAppCard({ app }) {
   const appName = app?.display_name
   const appId = app?.app_id
   const isSessionActive = Boolean(app?.is_session_active)
+  const isSessionDeleted = Boolean(app?.is_session_deleted)
   const restoreStatus = app?.restore_status
   const restoreReason = app?.restore_reason
 
@@ -23,7 +24,9 @@ export function SessionAppCard({ app }) {
       ? "secondary"
       : "outline")
 
-  const statusClass = restoreStatus === "launching"
+  const statusClass = isSessionDeleted
+    ? "text-muted-foreground"
+    : restoreStatus === "launching"
     ? "text-blue-700 border-blue-700"
     : (restoreStatus === "running"
       ? "bg-green-50 text-green-700 border-green-700"
@@ -38,7 +41,11 @@ export function SessionAppCard({ app }) {
   return (
     <div className="bg-background rounded-lg border p-3">
       <div className="flex items-start gap-3">
-        <SessionAppIcon appId={appId} appName={appName} />
+        <SessionAppIcon
+          appId={appId}
+          appName={appName}
+          isSessionDeleted={isSessionDeleted}
+        />
 
         <div className="min-w-0 flex-1 space-y-2">
           <p className="truncate text-sm font-medium">{appName}</p>

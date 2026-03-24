@@ -1,15 +1,14 @@
 import { useQuery } from "@tanstack/react-query"
-import { useNavigate } from "react-router"
 import { getDeletedSessionsRequest } from "@/features/session/api/session-api"
+import { TrashSessionCard } from "@/pages/trash/components/trash-session-card"
 
 export function TrashPage() {
-  const navigate = useNavigate()
   const {
     data,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["session", "deleted"],
+    queryKey: ["session", "trash"],
     queryFn: getDeletedSessionsRequest,
     retry: false,
   })
@@ -31,24 +30,11 @@ export function TrashPage() {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {sessions.map((session) => {
             const slug = session?.slugname || session?.slug || ""
-            if (!slug) {
-              return null
-            }
-
             return (
-              <button
-                key={slug}
-                type="button"
-                className="bg-card text-card-foreground rounded-xl border p-4 text-left transition-colors hover:bg-accent/40"
-                onClick={() => navigate(`/session/trash/${slug}`)}
-              >
-                <p className="truncate font-medium">{session?.name || "Unnamed session"}</p>
-                {session?.description ? (
-                  <p className="text-muted-foreground mt-1 line-clamp-2 text-sm">
-                    {session.description}
-                  </p>
-                ) : null}
-              </button>
+              <TrashSessionCard
+                key={slug || session?.id || session?.name || "deleted-session"}
+                session={session}
+              />
             )
           })}
         </div>
