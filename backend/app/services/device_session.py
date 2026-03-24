@@ -112,13 +112,15 @@ class DeviceSessionService:
                 )
         
         session_to_update = session
-        
-        if session_data.get("is_deleted"):
-            session_to_update = self.stop_session(session)
-            session_data.pop("is_deleted")
-            session_data['deleted_at'] = datetime.now()
-        else:
-            session_data['deleted_at'] = None
+
+        if "is_deleted" in session_data:
+            is_deleted = session_data.pop("is_deleted")
+
+            if is_deleted:
+                session_to_update = self.stop_session(session)
+                session_data["deleted_at"] = datetime.now()
+            else:
+                session_data["deleted_at"] = None
             
         updated_session = self.device_session_repo.update(session_to_update, session_data)
 
