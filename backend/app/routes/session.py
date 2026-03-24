@@ -121,45 +121,6 @@ def delete_active_session(
     return DeviceSessionService(db).delete_session(active_session)
 
 @session_route.post(
-    "/active/clone",
-    description=(ACTIVE_SESSION_DOCS_PATH / "clone_active_session.md").read_text(),
-    summary=(
-        "Creates a new session by cloning the current active session.",
-        "If no session name is provided, a slugified name will be automatically generated.",
-    ),
-    status_code=status.HTTP_201_CREATED,
-    response_model=DeviceSessionOut,
-)
-def clone_active_session(
-    *,
-    db: Annotated[so.Session, Depends(d.get_db)],
-    device: Annotated[md.Device, Depends(d.get_current_device)],
-    new_session: DeviceSessionIn,
-    active_session: Annotated[md.DeviceSession, Depends(d.get_active_session)],
-):
-    return DeviceSessionService(db).clone_session(
-        active_session, new_session, device
-    )
-
-
-# @session_route.post(
-#     "/active/save",
-#     description=(ACTIVE_SESSION_DOCS_PATH / "save_active_session.md").read_text(),
-#     summary="Saves the list of currently active applications for the active session.",
-#     status_code=status.HTTP_201_CREATED,
-#     response_model=DeviceSessionOut,
-# )
-# def save_active_session(
-#     *,
-#     db: Annotated[so.Session, Depends(d.get_db)],
-#     device: Annotated[md.Device, Depends(d.get_current_device)],
-#     active_session: Annotated[md.DeviceSession, Depends(d.get_active_session)],
-# ):
-#     DeviceService(db).sync_applications(device)
-#     return DeviceSessionService(db).save_session(active_session)
-
-
-@session_route.post(
     "/active/stop",
     description=(ACTIVE_SESSION_DOCS_PATH / "stop_active_session.md").read_text(),
     summary=(
@@ -225,29 +186,6 @@ def update_session_by_id(
 ):
     session = DeviceSessionService(db).get_session_by_id(session_id, device)
     return DeviceSessionService(db).update_session(session, device_update, device)
-
-
-@session_route.post(
-    "/{session_id}/clone",
-    description=(BY_ID_SESSION_DOCS_PATH / "post_session_by_id_clone.md").read_text(),
-    summary=(
-        "Creates a new session by cloning an existing saved session.",
-        "If no session name is provided for the clone, a slugified name will be automatically generated.",
-    ),
-    status_code=status.HTTP_201_CREATED,
-    response_model=DeviceSessionOut,
-)
-def clone_session_by_id(
-    *,
-    db: Annotated[so.Session, Depends(d.get_db)],
-    device: Annotated[md.Device, Depends(d.get_current_device)],
-    session_id: UUID,
-    new_session: DeviceSessionIn,
-):
-    session = DeviceSessionService(db).get_session_by_id(session_id, device)
-    return DeviceSessionService(db).clone_session(
-        session, new_session, device
-    )
 
 
 @session_route.delete(
@@ -342,29 +280,6 @@ def get_session_apps(
 ):
     session = DeviceSessionService(db).get_session_by_slugname(session_slug, device)
     return DeviceSessionService(db).get_apps(session)
-
-
-@session_route.post(
-    "/by-slug/{session_slug}/clone",
-    description=(BY_SLUG_SESSION_DOCS_PATH / "post_session_by_slug_clone.md").read_text(),
-    summary=(
-        "Creates a new session by cloning an existing saved session.",
-        "If no session name is provided for the clone, a slugified name will be automatically generated.",
-    ),
-    status_code=status.HTTP_201_CREATED,
-    response_model=DeviceSessionOut,
-)
-def clone_session_by_slug(
-    *,
-    db: Annotated[so.Session, Depends(d.get_db)],
-    device: Annotated[md.Device, Depends(d.get_current_device)],
-    session_slug: str,
-    new_session: DeviceSessionIn,
-):
-    session = DeviceSessionService(db).get_session_by_slugname(session_slug, device)
-    return DeviceSessionService(db).clone_session(
-        session, new_session, device
-    )
 
 
 @session_route.delete(

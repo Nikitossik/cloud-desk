@@ -176,13 +176,6 @@ class DeviceSessionService:
 
         return saved_session
 
-    def save_session(self, session: DeviceSession) -> DeviceSession:
-        saved_session = self.save_session_state(session)
-
-        SessionTracker.start(saved_session.id)
-
-        return saved_session
-
     def restore_session(self, session: DeviceSession, device: Device) -> DeviceSessionWithReport:
         self.stop_last_active_session(device)
         
@@ -213,13 +206,6 @@ class DeviceSessionService:
             **DeviceSessionOut.model_validate(new_active_session).model_dump(),
             report=restore_report
         )
-
-    def clone_session(
-        self, original_session: DeviceSession, new_session: DeviceSessionIn, device: Device
-    ) -> DeviceSession:
-        session_clone = self.create_session(new_session, device)
-
-        return self.device_session_repo.clone_state(original_session, session_clone)
 
     def delete_all_sessions(self, device: Device):
         for session in device.sessions:

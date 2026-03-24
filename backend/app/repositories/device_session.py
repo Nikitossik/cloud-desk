@@ -62,20 +62,6 @@ class DeviceSessionRepository(BaseRepository):
 
         return list(result_map.values())
 
-    def clone_state(
-        self, original_session: DeviceSession, clone_session: DeviceSession
-    ) -> DeviceSession:
-        for session_app_state in original_session.session_app_states:
-            cloned_app_state = SessionAppState(
-                application_id=session_app_state.application_id,
-                session_id=clone_session.id,
-            )
-            self.db.add(cloned_app_state)
-
-        self.db.commit()
-        self.db.refresh(clone_session)
-        return clone_session
-
     def update_apps_state(
         self, session: DeviceSession, apps_data: dict[str, Any]
     ) -> DeviceSession:

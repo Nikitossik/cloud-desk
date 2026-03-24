@@ -1,6 +1,6 @@
 # CloudDesk
 
-A system for managing user sessions, tracking application usage, and restoring working environments. Each session represents a list of open applications, and users can clone, activate, restore, and monitor their sessions. Currently, the system is designed to work on Windows environments.
+A system for managing user sessions, tracking application usage, and restoring working environments. Each session represents a list of open applications, and users can activate, restore, and monitor their sessions. Currently, the system is designed to work on Windows environments.
 
 ## Technologies
 
@@ -30,7 +30,7 @@ A system for managing user sessions, tracking application usage, and restoring w
 - JWT-based user authentication
 - Device registration and management
 - Device resolution flow for users with multiple devices
-- Session lifecycle management (create, start/stop, restore, clone, delete)
+- Session lifecycle management (create, start/stop, restore, delete)
 - Background session tracker for app usage collection
 - Real-time app status updates in active session via WebSocket
 - User interface for managing sessions, devices, and app states
