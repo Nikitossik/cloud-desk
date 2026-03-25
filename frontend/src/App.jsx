@@ -58,7 +58,7 @@ export default function App() {
   const currentDevice = Array.isArray(sidebarData?.devices)
     ? sidebarData.devices.find((device) => device?.is_current) || null
     : null
-  const isSupportedOs = currentDevice?.is_supported_os !== false
+  const isSupportedOs = currentDevice?.is_supported_os === true
   const isUnsupportedOs = !isSupportedOs
   const unsupportedDeviceOs = currentDevice?.os_name
   const unsupportedReason = currentDevice?.unsupported_reason
