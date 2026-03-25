@@ -1,6 +1,11 @@
-Returns aggregated sidebar data for the current user: devices with current marker, non-deleted sessions list, and deleted sessions count.
+Returns aggregated sidebar data for the current user: devices with current marker and support flags, non-deleted sessions list, and deleted sessions count.
 
 `sessions` contains only sessions that are not deleted (`last_deleted_at is null`).
+
+Each device in `devices` contains:
+
+- `is_supported_os`: `true` only for desktop Windows devices.
+- `unsupported_reason`: optional message when the device OS is not supported.
 
 ## Parameters
 
@@ -37,7 +42,9 @@ Content-Type: application/json
       "architecture": "AMD64",
       "created_at": "2026-03-10T10:00:00Z",
       "last_seen_at": "2026-03-10T10:30:00Z",
-      "is_current": true
+      "is_current": true,
+      "is_supported_os": true,
+      "unsupported_reason": null
     }
   ],
   "sessions": [
@@ -50,3 +57,5 @@ Content-Type: application/json
   "deleted_sessions_count": 2
 }
 ```
+
+If the current device OS is not supported, this endpoint still returns `200` with `devices[].is_supported_os = false` for the current device so the client can show graceful feedback.

@@ -27,8 +27,8 @@ def get_mac_address() -> str:
 def get_device_data() -> dict[str, Any]:
     device_info = dict()
     device_info["mac_address"] = get_mac_address() 
-    # device_info["os_name"] = "Darwin" # test macOs
-    device_info["os_name"] = platform.system()
+    device_info["os_name"] = "Darwin" # test macOs
+    # device_info["os_name"] = platform.system()
     device_info["os_release"] = platform.release()
     device_info["os_release_ver"] = platform.version()
     device_info["architecture"] = platform.machine()

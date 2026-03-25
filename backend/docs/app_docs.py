@@ -29,7 +29,8 @@ APP_DOCS = {
             "name": "user",
             "description": (
                 "User management endpoints for authenticated account-level operations, "
-                "including retrieving and updating user profile data."
+                "including retrieving and updating user profile data. "
+                "Sidebar payload includes per-device OS support flags."
             ),
         },
         {
@@ -46,14 +47,16 @@ APP_DOCS = {
                 "Endpoints for managing saved device sessions: creating, starting, stopping, restoring, "
                 "retrieving session details, listing applications, and deleting sessions. "
                 "If a session is not found, the API returns 404. "
-                "All operations require valid authentication tokens."
+                "All operations require valid authentication tokens. "
+                "For unsupported device OS, endpoints return 403 DEVICE_OS_NOT_SUPPORTED."
             ),
         },
         {
             "name": "statistics",
             "description": (
                 "Endpoints for aggregated application/session usage statistics "
-                "for the current authenticated device."
+                "for the current authenticated device. "
+                "For unsupported device OS, endpoints return 403 DEVICE_OS_NOT_SUPPORTED."
             ),
         },
     ],

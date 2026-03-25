@@ -38,3 +38,19 @@ Content-Type: application/json
   }
 ]
 ```
+
+## Unsupported OS
+
+If the current device OS is not supported, the endpoint returns:
+
+```http
+HTTP/1.1 403 Forbidden
+Content-Type: application/json
+
+{
+  "detail": {
+    "code": "DEVICE_OS_NOT_SUPPORTED",
+    "message": "This feature is available only on desktop Windows devices."
+  }
+}
+```
