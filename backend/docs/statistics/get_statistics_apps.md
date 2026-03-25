@@ -6,7 +6,7 @@ For each application, the response contains:
 - `usage`: usage grouped by session, each item with:
   - `session_id`: session identifier
   - `session_name`: session title
-  - `deleted_at`: timestamp if session is in trash, otherwise `null`
+  - `last_deleted_at`: timestamp if session is in trash, otherwise `null`
   - `total_time`: usage in seconds
 
 ## Parameters
@@ -39,13 +39,13 @@ Content-Type: application/json
       {
         "session_id": "b6f7f6f4-c355-4702-b8f9-8fd78016068a",
         "session_name": "Deep Work",
-        "deleted_at": null,
+        "last_deleted_at": null,
         "total_time": 5400
       },
       {
         "session_id": "e5306f2a-4ce2-426c-8ab8-7ad2b7b4c12a",
         "session_name": "Research",
-        "deleted_at": "2026-03-24T11:05:00Z",
+        "last_deleted_at": "2026-03-24T11:05:00Z",
         "total_time": 1800
       }
     ]

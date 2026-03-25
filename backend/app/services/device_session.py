@@ -191,11 +191,11 @@ class DeviceSessionService:
     def save_session_state(self, session: DeviceSession) -> DeviceSession:
         running_apps_data = uc.get_running_applications()
 
-        saved_session = self.device_session_repo.update_apps_state(
-            saved_session, running_apps_data
+        updated_session = self.device_session_repo.update_apps_state(
+            session, running_apps_data
         )
 
-        return saved_session
+        return updated_session
 
     def restore_session(self, session: DeviceSession, device: Device) -> DeviceSessionWithReport:
         self.stop_last_active_session(device)

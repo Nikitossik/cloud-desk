@@ -1,6 +1,6 @@
 Returns aggregated sidebar data for the current user: devices with current marker, non-deleted sessions list, and deleted sessions count.
 
-`sessions` contains only sessions that are not deleted (`deleted_at is null`).
+`sessions` contains only sessions that are not deleted (`last_deleted_at is null`).
 
 ## Parameters
 

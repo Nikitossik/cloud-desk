@@ -2,7 +2,10 @@ Returns aggregated session usage statistics for the current authenticated device
 
 For each session, the response contains:
 
-- `deleted_at`: timestamp if session is in trash, otherwise `null`
+- `last_deleted_at`: timestamp if session is in trash, otherwise `null`
+- `start_count`: number of times the session was started
+- `restore_count`: number of times the session was restored
+- `total_active_time`: total active time in seconds (computed from STARTED/STOPPED events)
 - `usage`: grouped by application with `total_time` in seconds.
 
 ## Parameters
@@ -33,7 +36,10 @@ Content-Type: application/json
   {
     "session_id": "b6f7f6f4-c355-4702-b8f9-8fd78016068a",
     "session_name": "Deep Work",
-    "deleted_at": null,
+    "last_deleted_at": null,
+    "start_count": 12,
+    "restore_count": 4,
+    "total_active_time": 9000,
     "usage": [
       {
         "app_id": "cc7b5703-87a2-47fc-8ef6-f4279d0c02dd",

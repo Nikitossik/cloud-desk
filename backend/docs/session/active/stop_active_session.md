@@ -28,8 +28,7 @@ Content-Type: application/json
   "slugname": "deep-work",
   "is_active": false,
   "created_at": "2026-03-12T10:00:00Z",
-  "saved_at": "2026-03-12T10:30:00Z",
-  "restored_at": null,
+  "last_restored_at": null,
   "last_active_at": "2026-03-12T10:30:00Z"
 }
 ```
