@@ -46,7 +46,7 @@ class AppUsageRepository(BaseRepository):
                 app_usage[session_id] = {
                     "session_id": session.id,
                     "session_name": session_name,
-                    "deleted_at": session.deleted_at,
+                    "last_deleted_at": session.last_deleted_at,
                     "total_time": 0,
                 }
 
@@ -86,7 +86,7 @@ class AppUsageRepository(BaseRepository):
         )
 
         if not all_sessions:
-            query = query.filter(DeviceSession.deleted_at.is_(None))
+            query = query.filter(DeviceSession.last_deleted_at.is_(None))
 
         rows = query.all()
 
@@ -108,7 +108,10 @@ class AppUsageRepository(BaseRepository):
                 session_map[session_id] = {
                     "session_id": session.id,
                     "session_name": session.name,
-                    "deleted_at": session.deleted_at,
+                    "last_deleted_at": session.last_deleted_at,
+                    "start_count": session.start_count,
+                    "restore_count": session.restore_count,
+                    "total_active_time": session.total_active_time,
                     "usage": {},
                 }
 
@@ -132,7 +135,10 @@ class AppUsageRepository(BaseRepository):
                 {
                     "session_id": session_data["session_id"],
                     "session_name": session_data["session_name"],
-                    "deleted_at": session_data["deleted_at"],
+                    "last_deleted_at": session_data["last_deleted_at"],
+                    "start_count": session_data["start_count"],
+                    "restore_count": session_data["restore_count"],
+                    "total_active_time": session_data["total_active_time"],
                     "usage": usage_items,
                 }
             )

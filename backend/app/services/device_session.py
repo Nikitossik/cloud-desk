@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from .session_tracker import SessionTracker
 from ..models import Device, DeviceSession
+from ..models.device_session_events import DeviceSessionEvent, SessionEventType
 from ..repositories import DeviceSessionRepository, AppUsageRepository
 from ..schemas.device_session import DeviceSessionIn, DeviceSessionUpdate, DeviceSessionWithReport, DeviceSessionOut, DeviceSessionTrashActionIn
 from ..schemas.application import ApplicationRestoreReportOut
@@ -19,7 +20,7 @@ class DeviceSessionService:
         
     def get_all_sessions(self, device: Device, deleted_only: bool = False) -> list[DeviceSession]:
         if deleted_only:
-            return [session for session in device.sessions if session.deleted_at is not None]
+            return [session for session in device.sessions if session.last_deleted_at is not None]
         return device.sessions
         
     def get_session_by_id(
@@ -95,11 +96,23 @@ class DeviceSessionService:
 
         if new_session.is_active:
             SessionTracker.start(new_session.id)
+            self._add_session_event(new_session, SessionEventType.STARTED)
 
         return new_session
+
+    def _add_session_event(self, session: DeviceSession, event_type: SessionEventType):
+        session_event = DeviceSessionEvent(
+            session_id=session.id,
+            event_type=event_type,
+        )
+        self.device_session_repo.db.add(session_event)
+        self.device_session_repo.db.commit()
     
     def update_session(self, session: DeviceSession, session_update: DeviceSessionUpdate, device: Device) -> DeviceSession:
         session_data = session_update.model_dump(exclude_unset=True)
+        is_deleted_provided = "is_deleted" in session_data
+        is_deleted = False
+        was_deleted = session.last_deleted_at is not None
         
         if session_data.get("name"):
             session_data["name"], session_data["slugname"] = generate_name_and_slug(session_data.get("name"))
@@ -113,16 +126,22 @@ class DeviceSessionService:
         
         session_to_update = session
 
-        if "is_deleted" in session_data:
+        if is_deleted_provided:
             is_deleted = session_data.pop("is_deleted")
 
             if is_deleted:
                 session_to_update = self.stop_session(session)
-                session_data["deleted_at"] = datetime.now()
+                session_data["last_deleted_at"] = datetime.now()
             else:
-                session_data["deleted_at"] = None
+                session_data["last_deleted_at"] = None
             
         updated_session = self.device_session_repo.update(session_to_update, session_data)
+
+        if is_deleted_provided:
+            if is_deleted and not was_deleted:
+                self._add_session_event(updated_session, SessionEventType.MOVED_TO_TRASH)
+            if (not is_deleted) and was_deleted:
+                self._add_session_event(updated_session, SessionEventType.RESTORED_FROM_TRASH)
 
         return updated_session
 
@@ -141,6 +160,7 @@ class DeviceSessionService:
         )
 
         SessionTracker.start(started_session.id)
+        self._add_session_event(started_session, SessionEventType.STARTED)
 
         return started_session
 
@@ -153,6 +173,9 @@ class DeviceSessionService:
     def stop_session(
         self, session: DeviceSession
     ) -> DeviceSession:
+        if not session.is_active:
+            return session
+
         saved_session = self.save_session_state(session)
 
         saved_session = self.device_session_repo.update(
@@ -161,6 +184,7 @@ class DeviceSessionService:
         )
 
         SessionTracker.stop(saved_session.id)
+        self._add_session_event(saved_session, SessionEventType.STOPPED)
 
         return saved_session
 
@@ -201,8 +225,9 @@ class DeviceSessionService:
 
         # datetime of restoring
         self.device_session_repo.update(
-            new_active_session, {"restored_at": datetime.now(tz=timezone.utc)}
+            new_active_session, {"last_restored_at": datetime.now(tz=timezone.utc)}
         )
+        self._add_session_event(new_active_session, SessionEventType.RESTORED)
 
         return DeviceSessionWithReport(
             **DeviceSessionOut.model_validate(new_active_session).model_dump(),
@@ -215,13 +240,13 @@ class DeviceSessionService:
 
     def _select_deleted_sessions(self, device: Device, action_data: DeviceSessionTrashActionIn) -> list[DeviceSession]:
         if action_data.all:
-            return [session for session in device.sessions if session.deleted_at is not None]
+            return [session for session in device.sessions if session.last_deleted_at is not None]
 
         selected_ids = set(action_data.session_ids or [])
         return [
             session
             for session in device.sessions
-            if session.deleted_at is not None and session.id in selected_ids
+            if session.last_deleted_at is not None and session.id in selected_ids
         ]
 
     def purge_trash(self, device: Device, purge_data: DeviceSessionTrashActionIn):
@@ -234,4 +259,5 @@ class DeviceSessionService:
         sessions_to_restore = self._select_deleted_sessions(device, restore_data)
 
         for session in sessions_to_restore:
-            self.device_session_repo.update(session, {"deleted_at": None})
+            restored_session = self.device_session_repo.update(session, {"last_deleted_at": None})
+            self._add_session_event(restored_session, SessionEventType.RESTORED_FROM_TRASH)
