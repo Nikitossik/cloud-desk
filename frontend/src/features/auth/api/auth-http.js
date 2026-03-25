@@ -6,7 +6,7 @@ import {
   setAccessToken,
 } from "@/features/auth/lib/token-storage"
 import { isExpired } from "@/features/auth/lib/jwt"
-import { getDeviceFingerprint } from "@/features/device/lib/fingerprint"
+import { getOrCreateDeviceFingerprint } from "@/features/device/lib/fingerprint"
 
 let requestInterceptorId = null
 let responseInterceptorId = null
@@ -50,7 +50,7 @@ export function setupAuthInterceptors({ onAuthFailed, onAccessTokenRefreshed }) 
   }
 
   requestInterceptorId = http.interceptors.request.use(async (config) => {
-    const deviceFingerprint = getDeviceFingerprint()
+    const deviceFingerprint = getOrCreateDeviceFingerprint()
     config.headers = config.headers ?? {}
     if (deviceFingerprint) {
       config.headers["X-Device-Fingerprint"] = deviceFingerprint

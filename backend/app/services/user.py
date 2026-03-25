@@ -40,9 +40,15 @@ class UserService:
         
         for device in user_devices:
             device.is_current = (device.id == current_device.id)
+            is_supported_os = device.is_supported_os
+            device.unsupported_reason = (
+                None
+                if is_supported_os
+                else "Core features are available only on desktop Windows devices."
+            )
         
         return UserSidebarOut(
             devices=user_devices,
             sessions=existing_sessions,
-            deleted_sessions_count=len(deleted_sessions)
+            deleted_sessions_count=len(deleted_sessions),
         )

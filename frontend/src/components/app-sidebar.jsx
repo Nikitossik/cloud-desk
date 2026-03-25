@@ -23,6 +23,7 @@ import {
 
 export function AppSidebar({
   onAddSession,
+  isSupportedOs = true,
   ...props
 }) {
   const { data: sidebarData } = useUserSidebarQuery()
@@ -45,26 +46,28 @@ export function AppSidebar({
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain onAddSession={onAddSession} />
+        <NavMain onAddSession={onAddSession} isSupportedOs={isSupportedOs} />
       </SidebarContent>
       <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Trash">
-              <NavLink to="/trash">
-                <Trash2 />
-                <span className="flex w-full min-w-0 items-center justify-between gap-2">
-                  <span>Trash</span>
-                  {deletedSessionsCount > 0 ? (
-                    <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
-                      {deletedSessionsCount}
-                    </Badge>
-                  ) : null}
-                </span>
-              </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        {isSupportedOs ? (
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Trash">
+                <NavLink to="/trash">
+                  <Trash2 />
+                  <span className="flex w-full min-w-0 items-center justify-between gap-2">
+                    <span>Trash</span>
+                    {deletedSessionsCount > 0 ? (
+                      <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
+                        {deletedSessionsCount}
+                      </Badge>
+                    ) : null}
+                  </span>
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        ) : null}
         <NavUser />
       </SidebarFooter>
       <SidebarRail />

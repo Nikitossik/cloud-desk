@@ -38,6 +38,8 @@ async def delete_devices(
     db.commit()
     return None
 
+
+# mac_address fallback for getting local device
 @device_route.get(
     "/local",
     description=(DOCS_PATH / "get_device_local.md").read_text(),

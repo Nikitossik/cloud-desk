@@ -10,7 +10,11 @@ from ..repositories import AppUsageRepository
 from ..schemas.statistics import StatisticsAppOut, StatisticsSessionOut
 
 
-statistics_route = APIRouter(prefix="/statistics", tags=["statistics"])
+statistics_route = APIRouter(
+    prefix="/statistics",
+    tags=["statistics"],
+    dependencies=[Depends(d.require_supported_device)],
+)
 DOCS_PATH = Path(__file__).parent.parent.parent / "docs" / "statistics"
 
 

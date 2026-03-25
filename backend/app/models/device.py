@@ -4,6 +4,7 @@ from ..database import Base
 import sqlalchemy.orm as so
 import sqlalchemy as sa
 import uuid
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from typing_extensions import TYPE_CHECKING
 
@@ -22,7 +23,7 @@ class Device(Base):
     fingerprint: so.Mapped[str] = so.mapped_column(index=True) 
     display_name: so.Mapped[str | None] = so.mapped_column(sa.String(60), nullable=True)
     
-    mac_address: so.Mapped[str] = so.mapped_column(sa.String(17))
+    mac_address: so.Mapped[str | None] = so.mapped_column(sa.String(17), nullable=True)
     os_name: so.Mapped[str] = so.mapped_column(sa.String(50))
     os_release: so.Mapped[str]
     os_release_ver: so.Mapped[str]
@@ -43,4 +44,8 @@ class Device(Base):
     __table_args__ = (
         sa.UniqueConstraint("user_id", "fingerprint", name="uq_user_fingerprint"),
     )
+
+    @hybrid_property
+    def is_supported_os(self) -> bool:
+        return (self.os_name or "").strip().lower() == "windows"
 

@@ -36,7 +36,7 @@ def _build_signature_map(apps: list[dict]) -> OrderedDict[str, tuple]:
 async def ws_active_session_apps(
     websocket: WebSocket,
     db: Annotated[Session, Depends(d.get_db)],
-    device: Annotated[md.Device, Depends(d.get_current_device_ws)],
+    device: Annotated[md.Device, Depends(d.get_supported_device_ws)],
 ):
     await websocket.accept()
 

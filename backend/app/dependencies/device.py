@@ -19,3 +19,16 @@ def get_current_device(
     device_fingerprint: str = Depends(get_device_fingerprint)
 ):
     return DeviceService(db).create_or_get_device(current_user.id, device_fingerprint)
+
+
+def require_supported_device(current_device=Depends(get_current_device)):
+    if current_device.is_supported_os:
+        return current_device
+
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail={
+            "code": "DEVICE_OS_NOT_SUPPORTED",
+            "message": "This feature is available only on desktop Windows devices.",
+        },
+    )

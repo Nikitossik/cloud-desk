@@ -43,6 +43,16 @@ def get_current_device_ws(
     return DeviceService(db).create_or_get_device(current_user.id, device_fingerprint)
 
 
+def get_supported_device_ws(
+    *,
+    device: Device = Depends(get_current_device_ws),
+) -> Device:
+    if device.is_supported_os:
+        return device
+
+    raise WebSocketException(code=4403, reason="DEVICE_OS_NOT_SUPPORTED")
+
+
 def get_active_session_ws(
     *,
     db: Session = Depends(get_db),

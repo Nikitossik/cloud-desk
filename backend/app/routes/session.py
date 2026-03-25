@@ -9,7 +9,11 @@ from typing import Annotated
 from pathlib import Path
 from uuid import UUID
 
-session_route = APIRouter(prefix="/session", tags=["session"])
+session_route = APIRouter(
+    prefix="/session",
+    tags=["session"],
+    dependencies=[Depends(d.require_supported_device)],
+)
 SESSION_DOCS_PATH = Path(__file__).parent.parent.parent / "docs" / "session"
 ACTIVE_SESSION_DOCS_PATH = SESSION_DOCS_PATH / "active"
 BY_ID_SESSION_DOCS_PATH = SESSION_DOCS_PATH / "by-id"

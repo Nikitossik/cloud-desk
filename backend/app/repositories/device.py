@@ -16,5 +16,5 @@ class DeviceRepository(BaseRepository):
         )
         
     def get_local_device(self) -> Device | None:
-        fingerprint = get_mac_address()
-        return self.db.query(Device).filter(Device.fingerprint == fingerprint).first()
+        mac_address = get_mac_address()
+        return self.db.query(Device).filter(Device.mac_address == mac_address).first()

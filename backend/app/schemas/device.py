@@ -18,7 +18,8 @@ class DeviceBase(BaseModel):
         },
     )
 
-    mac_address: str = Field(
+    mac_address: str | None = Field(
+        default=None,
         max_length=17,
         description="The MAC address of the device. Must be a string of maximum 17 characters.",
     )

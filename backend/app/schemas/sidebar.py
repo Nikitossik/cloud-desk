@@ -3,6 +3,11 @@ from .device import DeviceBaseExtended
 
 class DeviceForSidebar(DeviceBaseExtended):
     is_current: bool = Field(description="Indicates whether this device is the current device being used.")
+    is_supported_os: bool = Field(description="Whether this device OS is supported for core features.")
+    unsupported_reason: str | None = Field(
+        default=None,
+        description="Optional reason returned when this device OS is unsupported.",
+    )
 
 class SessionForSidebar(BaseModel):
     model_config = ConfigDict(
