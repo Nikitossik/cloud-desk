@@ -11,8 +11,15 @@ import threading
 from typing import Callable
 import shlex
 import platform
-import re
 import uuid
+
+EXE_BLACKLIST = {
+    "applicationframehost.exe",
+    "RuntimeBroker.exe",
+    "ShellExperienceHost.exe",
+    "StartMenuExperienceHost.exe",
+    "SearchHost.exe",
+}
 
 def get_mac_address() -> str:
     return ":".join(re.findall("..", "%012x" % uuid.getnode()))
@@ -45,6 +52,11 @@ def get_running_applications() -> dict[str, Any]:
         try:
             pid = window.getPID()
             proc = ps.Process(pid)
+            proc_name = (proc.name() or "").lower()
+
+            if proc_name in EXE_BLACKLIST:
+                continue
+
             exe_path = proc.exe()
 
             key = f"{exe_path}_{pid}"
