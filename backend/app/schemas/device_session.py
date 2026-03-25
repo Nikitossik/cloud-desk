@@ -63,10 +63,6 @@ class DeviceSessionOut(DeviceSessionBase):
     created_at: datetime.datetime = Field(
         description="Timestamp when the session was created."
     )
-    saved_at: datetime.datetime | None = Field(
-        default=None,
-        description="Timestamp when the session was last saved.",
-    )
     last_restored_at: datetime.datetime | None = Field(
         default=None,
         description="Timestamp when the session was last restored.",

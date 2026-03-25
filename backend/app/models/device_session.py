@@ -27,7 +27,6 @@ class DeviceSession(Base):
     is_active: so.Mapped[bool] = so.mapped_column(sa.Boolean, default=True)
 
     created_at = so.mapped_column(sa.DateTime(), server_default=sa.func.now())
-    saved_at = so.mapped_column(sa.DateTime(), nullable=True)
     last_active_at = so.mapped_column(sa.DateTime(), nullable=True)
     last_restored_at = so.mapped_column(sa.DateTime(), nullable=True)
     last_deleted_at = so.mapped_column(sa.DateTime(), nullable=True)

@@ -191,11 +191,6 @@ class DeviceSessionService:
     def save_session_state(self, session: DeviceSession) -> DeviceSession:
         running_apps_data = uc.get_running_applications()
 
-        # datetime of saving
-        saved_session = self.device_session_repo.update(
-            session, {"saved_at": datetime.now(tz=timezone.utc)}
-        )
-
         saved_session = self.device_session_repo.update_apps_state(
             saved_session, running_apps_data
         )
