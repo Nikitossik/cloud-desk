@@ -6,7 +6,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts"
+import { Cell, Label, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts"
 import { StatisticsPieTooltip } from "@/pages/statistics/components/statistics-pie-tooltip"
 
 const CHART_COLORS = [
@@ -19,12 +19,17 @@ const CHART_COLORS = [
 
 export function StatisticsSessionCard({ session, formatDuration }) {
   const usageItems = Array.isArray(session?.usage) ? session.usage : []
+  const startedCount = Number(session?.start_count || 0)
+  const restoredCount = Number(session?.restore_count || 0)
   const chartData = usageItems.map((app, index) => ({
     app_id: app?.app_id,
     app_label: app?.display_name || "Unknown app",
     total_time: Number(app?.total_time || 0),
     fill: CHART_COLORS[index % CHART_COLORS.length],
   }))
+  const totalActiveTime = Number(
+    session?.total_active_time || chartData.reduce((sum, item) => sum + item.total_time, 0),
+  )
 
   return (
     <Card>
@@ -32,7 +37,7 @@ export function StatisticsSessionCard({ session, formatDuration }) {
         <CardTitle>
           <span className="flex items-center gap-2">
             <span className="wrap-break-word whitespace-normal">{session?.session_name || "Unnamed session"}</span>
-            {session?.deleted_at ? (
+            {session?.last_deleted_at ? (
               <Badge variant="destructive" className="h-5 px-1.5 text-[10px]">In trash</Badge>
             ) : null}
           </span>
@@ -44,6 +49,10 @@ export function StatisticsSessionCard({ session, formatDuration }) {
           <p className="text-muted-foreground text-sm">No apps usage data.</p>
         ) : (
           <>
+            <p className="text-muted-foreground mb-2 text-xs">
+              Started {startedCount} times • Restored {restoredCount} times
+            </p>
+
             <div className="mx-auto h-65 w-full max-w-75">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -62,6 +71,7 @@ export function StatisticsSessionCard({ session, formatDuration }) {
                     data={chartData}
                     dataKey="total_time"
                     nameKey="app_label"
+                    innerRadius={64}
                     strokeWidth={5}
                     labelLine={false}
                     label={({ payload, ...props }) => (
@@ -82,6 +92,37 @@ export function StatisticsSessionCard({ session, formatDuration }) {
                     {chartData.map((entry, index) => (
                       <Cell key={`${entry.app_label}-${index}`} fill={entry.fill} />
                     ))}
+                    <Label
+                      content={({ viewBox }) => {
+                        if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                          return (
+                            <text
+                              x={viewBox.cx}
+                              y={viewBox.cy}
+                              textAnchor="middle"
+                              dominantBaseline="middle"
+                            >
+                              <tspan
+                                x={viewBox.cx}
+                                y={viewBox.cy}
+                                className="fill-foreground text-sm font-bold"
+                              >
+                                {formatDuration(totalActiveTime)}
+                              </tspan>
+                              <tspan
+                                x={viewBox.cx}
+                                y={(viewBox.cy || 0) + 18}
+                                className="fill-muted-foreground text-xs"
+                              >
+                                Total active time
+                              </tspan>
+                            </text>
+                          )
+                        }
+
+                        return null
+                      }}
+                    />
                   </Pie>
                 </PieChart>
               </ResponsiveContainer>

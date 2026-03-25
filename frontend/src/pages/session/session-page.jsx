@@ -154,7 +154,7 @@ export function SessionPage() {
     ""
 
   const isActive = Boolean(session?.is_active)
-  const isDeleted = Boolean(isTrashRoute || session?.deleted_at || session?.is_deleted)
+  const isDeleted = Boolean(isTrashRoute || session?.last_deleted_at || session?.is_deleted)
   const {
     apps: activeSessionApps,
     isLoading: isActiveAppsLoading,
@@ -170,13 +170,13 @@ export function SessionPage() {
     withSeconds: false,
     todayAsTime: true,
   })
-  const hasRestoredAt = Boolean(session?.restored_at)
-  const restoredAtText = formatUiDateTime(session?.restored_at, {
+  const hasRestoredAt = Boolean(session?.last_restored_at)
+  const restoredAtText = formatUiDateTime(session?.last_restored_at, {
     withSeconds: false,
     todayAsTime: true,
   })
-  const hasDeletedAt = Boolean(session?.deleted_at)
-  const deletedAtText = formatUiDateTime(session?.deleted_at, {
+  const hasDeletedAt = Boolean(session?.last_deleted_at)
+  const deletedAtText = formatUiDateTime(session?.last_deleted_at, {
     withSeconds: false,
     todayAsTime: true,
   })

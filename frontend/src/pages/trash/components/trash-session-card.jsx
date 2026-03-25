@@ -2,7 +2,7 @@ import { formatUiDateTime } from "@/shared/lib/date-time"
 
 export function TrashSessionCard({ session, checked = false, onCheckedChange }) {
   const slug = session?.slugname || session?.slug || ""
-  const deletedAtText = formatUiDateTime(session?.deleted_at, {
+  const deletedAtText = formatUiDateTime(session?.last_deleted_at, {
     withSeconds: false,
     todayAsTime: true,
   })

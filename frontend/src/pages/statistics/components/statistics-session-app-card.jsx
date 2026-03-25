@@ -23,9 +23,9 @@ export function StatisticsSessionAppCard({ app, formatDuration, usage }) {
   const chartData = usageItems.map((item, index) => ({
     session_id: item?.session_id,
     session_name: item?.session_name || "Unknown session",
-    deleted_at: item?.deleted_at || null,
+    last_deleted_at: item?.last_deleted_at || null,
     total_time: Number(item?.total_time || 0),
-    fill: item?.deleted_at ? "var(--muted-foreground)" : CHART_COLORS[index % CHART_COLORS.length],
+    fill: item?.last_deleted_at ? "var(--muted-foreground)" : CHART_COLORS[index % CHART_COLORS.length],
   }))
   const totalUsage = chartData.reduce((sum, item) => sum + item.total_time, 0)
 
@@ -53,7 +53,7 @@ export function StatisticsSessionAppCard({ app, formatDuration, usage }) {
                       <StatisticsPieTooltip
                         formatDuration={formatDuration}
                         labelKey="session_name"
-                        deletedAtKey="deleted_at"
+                        deletedAtKey="last_deleted_at"
                       />
                     )}
                   />
@@ -123,7 +123,7 @@ export function StatisticsSessionAppCard({ app, formatDuration, usage }) {
                 <div key={String(item.session_id || `${item.session_name}-${index}`)} className="flex items-center gap-2 text-sm">
                   <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.fill }} />
                   <span className="text-muted-foreground">{item.session_name}</span>
-                  {item.deleted_at ? <Trash2 className="text-destructive size-3.5" /> : null}
+                  {item.last_deleted_at ? <Trash2 className="text-destructive size-3.5" /> : null}
                 </div>
               ))}
             </div>
