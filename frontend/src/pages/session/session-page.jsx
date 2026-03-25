@@ -46,7 +46,32 @@ export function SessionPage() {
     },
     onSuccess: (_, variables) => {
       if (variables?.isDeleted) {
-        navigate(`/session/trash/${session_slug}`, { replace: true })
+        const sidebarData = queryClient.getQueryData(USER_SIDEBAR_QUERY_KEY)
+        const userSessions = Array.isArray(sidebarData?.sessions)
+          ? sidebarData.sessions
+          : []
+
+        const nextSession = userSessions.find((item) => {
+          const itemSlug = item?.slugname || item?.slug || ""
+          const itemId = item?.id
+
+          if (!itemSlug) {
+            return false
+          }
+
+          if (variables?.sessionId && itemId && itemId === variables.sessionId) {
+            return false
+          }
+
+          return itemSlug !== session_slug
+        })
+
+        if (nextSession?.slugname || nextSession?.slug) {
+          const nextSlug = nextSession.slugname || nextSession.slug
+          navigate(`/session/${nextSlug}`, { replace: true })
+        } else {
+          navigate("/trash", { replace: true })
+        }
       } else {
         navigate(`/session/${session_slug}`, { replace: true })
       }

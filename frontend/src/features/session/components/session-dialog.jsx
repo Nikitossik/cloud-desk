@@ -136,6 +136,13 @@ export function SessionDialog({
 
         queryClient.invalidateQueries({ queryKey: USER_SIDEBAR_QUERY_KEY })
       } else {
+        if (response?.slugname) {
+          navigate(`/session/${response.slugname}`, { replace: true })
+          queryClient.invalidateQueries({
+            queryKey: SESSION_BY_SLUG_QUERY_KEY(response.slugname),
+          })
+        }
+
         queryClient.invalidateQueries({ queryKey: USER_SIDEBAR_QUERY_KEY })
       }
 
