@@ -18,6 +18,7 @@ import { StatisticsPage } from "@/pages/statistics/statistics-page"
 import { TrashPage } from "@/pages/trash/trash-page"
 import { AuthPage } from "@/features/auth/pages/auth-page"
 import { SessionDialog } from "@/features/session/components/session-dialog"
+import { NotFoundPage } from "@/pages/not-found/not-found-page"
 
 export default function App() {
   const { pathname } = useLocation()
@@ -35,7 +36,12 @@ export default function App() {
         <Route path="/login" element={<AuthPage />} />
         <Route
           path="*"
-          element={<Navigate to={isAuthenticated ? "/" : "/login"} replace />}
+          element={
+            <NotFoundPage
+              primaryActionTo={isAuthenticated ? "/" : "/login"}
+              primaryActionLabel={isAuthenticated ? "Go to app" : "Go to login"}
+            />
+          }
         />
       </Routes>
     )
@@ -71,6 +77,7 @@ export default function App() {
           <Route path="/session/trash/:session_slug" element={<SessionPage />} />
           <Route path="/statistics" element={<StatisticsPage />} />
           <Route path="/trash" element={<TrashPage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </SidebarInset>
       <SessionDialog

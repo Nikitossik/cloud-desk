@@ -17,6 +17,7 @@ import { SessionAppCard } from "@/pages/session/components/session-app-card"
 import { SessionMetaBadgeRow } from "@/pages/session/components/session-meta-badge-row"
 import { SessionActions } from "@/pages/session/components/session-actions"
 import { SessionDialog } from "@/features/session/components/session-dialog"
+import { NotFoundPage } from "@/pages/not-found/not-found-page"
 import { formatUiDateTime } from "@/shared/lib/date-time"
 
 export function SessionPage() {
@@ -216,7 +217,19 @@ export function SessionPage() {
   }
 
   if (!session) {
+    const errorStatus = error?.response?.status
     const errorMessage = error?.response?.data?.detail || error?.message || "Session not found"
+
+    if (errorStatus === 404) {
+      return (
+        <NotFoundPage
+          title="Session not found"
+          message={String(errorMessage)}
+          primaryActionTo="/statistics"
+          primaryActionLabel="Go to statistics"
+        />
+      )
+    }
 
     return (
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
