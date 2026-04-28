@@ -4,7 +4,7 @@ from httpx import Response
 
 
 def test_unathorized_user(client):
-    response: Response = client.get("/auth/me")
+    response: Response = client.get("/user/me")
     assert response.status_code == 401
 
 
@@ -25,6 +25,17 @@ def test_register_user(client):
 
 
 def test_user_already_exists(client):
+    first_response: Response = client.post(
+        "/auth/signup",
+        json={
+            "name": "Test",
+            "surname": "Test",
+            "email": "testuser@gmail.com",
+            "password": "testpassword",
+        },
+    )
+    assert first_response.status_code == 200
+
     response: Response = client.post(
         "/auth/signup",
         json={
@@ -38,6 +49,6 @@ def test_user_already_exists(client):
 
 
 def test_auth_me(client, user_token):
-    response: Response = client.get("/auth/me", headers=auth_headers(user_token))
+    response: Response = client.get("/user/me", headers=auth_headers(user_token))
     assert response.status_code == 200
     assert response.json()["email"] == "testuser@gmail.com"

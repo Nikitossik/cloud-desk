@@ -4,8 +4,9 @@ from httpx import Response
 
 
 def test_get_device(client, user_token):
-    response: Response = client.get("/device", headers=auth_headers(user_token))
+    response: Response = client.get("/device/current", headers=auth_headers(user_token))
     assert response.status_code == 200
+    assert response.json()["os_name"] == "Windows"
 
 
 def test_delete_device(client, user_token):

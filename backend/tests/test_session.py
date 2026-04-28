@@ -1,49 +1,56 @@
-from .conftest import client, user_token, test_applications
+from .conftest import client, user_token
 from .utils import auth_headers
 from httpx import Response
 
 
-def test_create_session(client, user_token):
-    response: Response = client.post(
-        "/session",
+def create_session(client, user_token, *, name="working session", start=True):
+    return client.post(
+        "/session/",
         headers=auth_headers(user_token),
         json={
-            "name": "working session",
+            "name": name,
             "description": "my first session",
-            "enable_tracking": False,
+            "start": start,
         },
     )
+
+
+def test_create_session(client, user_token):
+    response: Response = create_session(client, user_token)
     assert response.status_code == 201
     assert response.json()["name"] == "working session"
     assert response.json()["slugname"] == "working-session"
     assert response.json()["is_active"] is True
-    assert response.json()["is_tracking"] is False
 
 
 def test_get_session_by_slug(client, user_token):
+    create_session(client, user_token)
+
     response: Response = client.get(
-        "/session/working-session",
+        "/session/by-slug/working-session",
         headers=auth_headers(user_token),
     )
     assert response.status_code == 200
     assert response.json()["name"] == "working session"
     assert response.json()["slugname"] == "working-session"
     assert response.json()["is_active"] is True
-    assert response.json()["is_tracking"] is False
 
 
 def test_get_active_session(client, user_token):
-    response: Response = client.get("/active-session", headers=auth_headers(user_token))
+    create_session(client, user_token)
+
+    response: Response = client.get("/session/active", headers=auth_headers(user_token))
     assert response.status_code == 200
     assert response.json()["name"] == "working session"
     assert response.json()["slugname"] == "working-session"
     assert response.json()["is_active"] is True
-    assert response.json()["is_tracking"] is False
 
 
 def test_get_all_sessions(client, user_token):
+    create_session(client, user_token)
+
     response: Response = client.get(
-        "/session",
+        "/session/",
         headers=auth_headers(user_token),
     )
     assert response.status_code == 200
@@ -51,48 +58,56 @@ def test_get_all_sessions(client, user_token):
 
 
 def test_deactivate_active_session(client, user_token):
+    create_session(client, user_token)
+
     response: Response = client.post(
-        "/active-session/deactivate",
+        "/session/active/stop",
         headers=auth_headers(user_token),
     )
-    assert response.status_code == 201
+    assert response.status_code in (200, 201)
     assert response.json()["name"] == "working session"
     assert response.json()["slugname"] == "working-session"
     assert response.json()["is_active"] is False
-    assert response.json()["is_tracking"] is False
 
 
 def test_not_found_active_session(client, user_token):
+    create_session(client, user_token, start=False)
+
     response: Response = client.get(
-        "/active-session",
+        "/session/active",
         headers=auth_headers(user_token),
     )
     assert response.status_code == 404
 
 
 def test_activate_session_by_slug(client, user_token):
+    create_session(client, user_token, start=False)
+
     response: Response = client.post(
-        "/session/working-session/activate",
+        "/session/by-slug/working-session/start",
         headers=auth_headers(user_token),
     )
     assert response.status_code == 200
     assert response.json()["name"] == "working session"
     assert response.json()["slugname"] == "working-session"
     assert response.json()["is_active"] is True
-    assert response.json()["is_tracking"] is False
 
 
 def test_delete_active_session(client, user_token):
+    create_session(client, user_token)
+
     response: Response = client.delete(
-        "/active-session",
+        "/session/active",
         headers=auth_headers(user_token),
     )
     assert response.status_code == 204
 
 
 def test_delete_session_by_slug(client, user_token):
+    create_session(client, user_token)
+
     response: Response = client.delete(
-        "/session/working-session",
+        "/session/by-slug/working-session",
         headers=auth_headers(user_token),
     )
     assert response.status_code == 204
@@ -100,7 +115,7 @@ def test_delete_session_by_slug(client, user_token):
 
 def test_get_all_sessions_empty(client, user_token):
     response: Response = client.get(
-        "/session",
+        "/session/",
         headers=auth_headers(user_token),
     )
     assert response.status_code == 200

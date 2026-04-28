@@ -12,6 +12,7 @@ from .utils import auth_headers
 from uuid import UUID
 
 TEST_SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
+TEST_DEVICE_FINGERPRINT = "test-device-fingerprint"
 
 engine = create_engine(
     TEST_SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
@@ -19,7 +20,7 @@ engine = create_engine(
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def db():
     Base.metadata.create_all(bind=engine)
     db = TestingSessionLocal()
@@ -30,21 +31,35 @@ def db():
         Base.metadata.drop_all(bind=engine)
 
 
-@pytest.fixture(scope="session")
-def client(db):
+@pytest.fixture()
+def client(db, monkeypatch):
+    def fake_get_device_data():
+        return {
+            "mac_address": "00:11:22:33:44:55",
+            "os_name": "Windows",
+            "os_release": "11",
+            "os_release_ver": "10.0.22631",
+            "architecture": "AMD64",
+        }
+
+    monkeypatch.setattr("app.utils.core.get_device_data", fake_get_device_data)
+
     def override_get_db():
         try:
             yield db
         finally:
-            db.close()
+            pass
 
     app.dependency_overrides[get_db] = override_get_db
 
     client = TestClient(app)
-    yield client
+    try:
+        yield client
+    finally:
+        app.dependency_overrides.clear()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def user_token(client):
     register_data = {
         "name": "Test",
@@ -56,6 +71,7 @@ def user_token(client):
 
     response = client.post(
         "/auth/token",
+        headers={"X-Device-Fingerprint": TEST_DEVICE_FINGERPRINT},
         data={
             "username": register_data["email"],
             "password": register_data["password"],
@@ -68,7 +84,7 @@ def user_token(client):
 
 @pytest.fixture()
 def test_device(client, user_token):
-    response: Response = client.get("/device", headers=auth_headers(user_token))
+    response = client.get("/device/current", headers=auth_headers(user_token))
     return response.json()
 
 
